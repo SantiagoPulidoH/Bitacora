@@ -484,6 +484,22 @@ button.primary {
 button.primary:hover { opacity: 0.85; }
 button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
+button.secondary-btn {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  padding: 13px 28px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+button.secondary-btn:hover { border-color: var(--accent); color: var(--accent); }
+
 /* Table */
 .table-wrap {
   overflow-x: auto;
@@ -537,19 +553,26 @@ tbody tr:hover td { background: var(--bg-elev); }
 .flag.warn { color: var(--loss); }
 .flag.ok { color: var(--text-dim); }
 
-.delete-btn {
+.row-actions {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.icon-btn {
   background: none;
   border: none;
   color: var(--text-faded);
   cursor: pointer;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  padding: 4px 10px;
+  font-size: 13px;
+  padding: 4px 8px;
   line-height: 1;
   transition: color 0.2s;
 }
 
-.delete-btn:hover { color: var(--loss); }
+.icon-btn:hover { color: var(--accent); }
+.icon-btn.delete:hover { color: var(--loss); }
 
 .empty-state {
   padding: 56px;
@@ -561,7 +584,7 @@ tbody tr:hover td { background: var(--bg-elev); }
   text-transform: uppercase;
 }
 
-/* Reflection cell in historial - stacked */
+/* Reflection cell */
 .reflections {
   display: flex;
   flex-direction: column;
@@ -590,16 +613,10 @@ tbody tr:hover td { background: var(--bg-elev); }
 .reflection-item.eliminar .r-tag { color: var(--loss); }
 .reflection-item.repetir .r-tag { color: var(--win); }
 
-.reflection-item .r-text {
-  color: var(--text-dim);
-}
+.reflection-item .r-text { color: var(--text-dim); }
 
-.reflection-item.empty { display: none; }
-
-/* ===== Lectura agrupada (revisión) ===== */
-.review-section {
-  margin-bottom: 56px;
-}
+/* Revisión agrupada */
+.review-section { margin-bottom: 56px; }
 
 .review-toggle {
   width: 100%;
@@ -717,6 +734,99 @@ tbody tr:hover td { background: var(--bg-elev); }
   line-height: 1.5;
 }
 
+/* ===== MODAL DE EDICIÓN ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 200;
+  overflow-y: auto;
+  padding: 24px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  max-width: 900px;
+  width: 100%;
+  margin: auto;
+  padding: 36px;
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.modal-header .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+  line-height: 1;
+  font-family: 'JetBrains Mono', monospace;
+  transition: color 0.2s;
+}
+
+.modal-close:hover { color: var(--accent); }
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.modal-actions .msg {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--text-faded);
+}
+
+.modal-actions .msg.error { color: var(--loss); }
+.modal-actions .msg.ok { color: var(--win); }
+
+.modal-actions .buttons {
+  display: flex;
+  gap: 10px;
+}
+
 .footer {
   margin-top: 64px;
   padding-top: 24px;
@@ -781,7 +891,7 @@ tbody tr:hover td { background: var(--bg-elev); }
   <header class="header">
     <div>
       <h1>Bitácora</h1>
-      <div class="subtitle">trading behavior log · <em>v0.3</em></div>
+      <div class="subtitle">trading behavior log · <em>v0.4</em></div>
     </div>
     <div class="header-right">
       <div class="user-info">
@@ -949,9 +1059,103 @@ tbody tr:hover td { background: var(--bg-elev); }
   </div>
 
   <footer class="footer">
-    <span>Bitácora v0.3 · Firestore</span>
+    <span>Bitácora v0.4 · Firestore</span>
     <span id="storageInfo">0 trades</span>
   </footer>
+</div>
+
+<!-- MODAL DE EDICIÓN -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <button class="modal-close" id="btnCloseModal" title="Cerrar (Esc)">✕</button>
+    <div class="modal-header">
+      <h2>Editar trade</h2>
+      <div class="sub" id="editingInfo">—</div>
+    </div>
+
+    <form id="editForm">
+      <div class="form-grid">
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="editFecha" required>
+        </div>
+        <div class="field">
+          <label>Hora</label>
+          <input type="time" id="editHora" required>
+        </div>
+        <div class="field">
+          <label>Par</label>
+          <input type="text" id="editPar" required autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Dirección</label>
+          <select id="editDireccion" required>
+            <option value="long">Long</option>
+            <option value="short">Short</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Setup</label>
+          <select id="editSetup" required>
+            <option value="A+">A+</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>¿Hubo duda?</label>
+          <div class="toggle">
+            <input type="radio" name="editDuda" id="editDuda-no" value="no">
+            <label for="editDuda-no">No</label>
+            <input type="radio" name="editDuda" id="editDuda-si" value="si">
+            <label for="editDuda-si">Sí</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>¿Seguí el plan?</label>
+          <div class="toggle">
+            <input type="radio" name="editPlan" id="editPlan-si" value="si">
+            <label for="editPlan-si">Sí</label>
+            <input type="radio" name="editPlan" id="editPlan-no" value="no">
+            <label for="editPlan-no">No</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Resultado (R)</label>
+          <input type="number" id="editResultado" step="0.1" required>
+        </div>
+      </div>
+
+      <div class="reflection-grid">
+        <div class="field">
+          <label>Notas <span class="label-hint">contexto, emociones, qué pasó</span></label>
+          <textarea id="editNotas"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Qué eliminaría <span class="label-hint">errores · qué no repetir</span></label>
+          <textarea id="editQueEliminaria"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Qué repetiría <span class="label-hint">aciertos · qué mantener</span></label>
+          <textarea id="editQueRepitiria"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <span class="msg" id="editMsg"></span>
+        <div class="buttons">
+          <button type="button" class="secondary-btn" id="btnCancelEdit">Cancelar</button>
+          <button type="submit" class="primary" id="btnSaveEdit">Guardar cambios</button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script type="module">
@@ -970,6 +1174,7 @@ import {
   collection,
   addDoc,
   deleteDoc,
+  updateDoc,
   doc,
   query,
   where,
@@ -996,6 +1201,7 @@ const DAYS = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
 let currentUser = null;
 let trades = [];
 let unsubscribeTrades = null;
+let editingTradeId = null; // id del trade que se está editando
 
 const initialLoader = document.getElementById('initialLoader');
 const loginScreen = document.getElementById('loginScreen');
@@ -1075,6 +1281,7 @@ onAuthStateChanged(auth, (user) => {
     currentUser = null;
     if (unsubscribeTrades) { unsubscribeTrades(); unsubscribeTrades = null; }
     trades = [];
+    closeEditModal();
     showLogin();
   }
 });
@@ -1102,6 +1309,7 @@ function subscribeToTrades() {
   });
 }
 
+// ===== Crear trade =====
 document.getElementById('tradeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!currentUser) return;
@@ -1144,13 +1352,123 @@ document.getElementById('tradeForm').addEventListener('submit', async (e) => {
   }
 });
 
+// ===== Eliminar trade =====
 async function deleteTrade(id) {
   if (!confirm('¿Eliminar este trade? No se puede deshacer.')) return;
   try { await deleteDoc(doc(db, 'trades', id)); }
   catch (err) { alert('Error al eliminar: ' + err.message); }
 }
 
-// Toggle de la sección de revisión
+// ===== MODAL DE EDICIÓN =====
+const editModal = document.getElementById('editModal');
+const editForm = document.getElementById('editForm');
+const editMsg = document.getElementById('editMsg');
+const btnSaveEdit = document.getElementById('btnSaveEdit');
+
+function openEditModal(tradeId) {
+  const trade = trades.find(t => t.id === tradeId);
+  if (!trade) { alert('Trade no encontrado.'); return; }
+
+  editingTradeId = tradeId;
+
+  // Pre-cargar valores
+  document.getElementById('editFecha').value = trade.fecha || '';
+  document.getElementById('editHora').value = trade.hora || '';
+  document.getElementById('editPar').value = trade.par || '';
+  document.getElementById('editDireccion').value = trade.direccion || 'long';
+  document.getElementById('editSetup').value = trade.setup || 'A+';
+
+  // Radio buttons: duda y plan
+  const dudaValue = trade.duda || 'no';
+  document.querySelector(`input[name="editDuda"][value="${dudaValue}"]`).checked = true;
+
+  const planValue = trade.plan || 'si';
+  document.querySelector(`input[name="editPlan"][value="${planValue}"]`).checked = true;
+
+  document.getElementById('editResultado').value = (typeof trade.r === 'number') ? trade.r : '';
+  document.getElementById('editNotas').value = trade.notas || '';
+  document.getElementById('editQueEliminaria').value = trade.queEliminaria || '';
+  document.getElementById('editQueRepitiria').value = trade.queRepitiria || '';
+
+  // Info en el header del modal
+  const rSign = trade.r > 0 ? '+' : '';
+  document.getElementById('editingInfo').textContent =
+    `${trade.fecha} · ${trade.par} · ${rSign}${trade.r}R`;
+
+  editMsg.textContent = '';
+  editMsg.className = 'msg';
+
+  editModal.classList.add('open');
+  document.body.style.overflow = 'hidden'; // evita scroll detrás
+}
+
+function closeEditModal() {
+  editModal.classList.remove('open');
+  document.body.style.overflow = '';
+  editingTradeId = null;
+  editMsg.textContent = '';
+}
+
+document.getElementById('btnCloseModal').addEventListener('click', closeEditModal);
+document.getElementById('btnCancelEdit').addEventListener('click', closeEditModal);
+
+// Cerrar al hacer click en el overlay (fuera del modal)
+editModal.addEventListener('click', (e) => {
+  if (e.target === editModal) closeEditModal();
+});
+
+// Cerrar con ESC
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && editModal.classList.contains('open')) closeEditModal();
+});
+
+// Guardar edición
+editForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!editingTradeId || !currentUser) return;
+
+  const r = parseFloat(document.getElementById('editResultado').value);
+  if (isNaN(r)) {
+    editMsg.textContent = 'Ingresá un resultado en R válido.';
+    editMsg.className = 'msg error';
+    return;
+  }
+
+  const updatedData = {
+    userId: currentUser.uid, // obligatorio por las reglas de seguridad
+    fecha: document.getElementById('editFecha').value,
+    hora: document.getElementById('editHora').value,
+    par: document.getElementById('editPar').value.toUpperCase().trim(),
+    direccion: document.getElementById('editDireccion').value,
+    setup: document.getElementById('editSetup').value,
+    duda: document.querySelector('input[name="editDuda"]:checked').value,
+    plan: document.querySelector('input[name="editPlan"]:checked').value,
+    r: r,
+    notas: document.getElementById('editNotas').value.trim(),
+    queEliminaria: document.getElementById('editQueEliminaria').value.trim(),
+    queRepitiria: document.getElementById('editQueRepitiria').value.trim(),
+    updatedAt: serverTimestamp()
+  };
+
+  btnSaveEdit.disabled = true;
+  editMsg.textContent = 'guardando…';
+  editMsg.className = 'msg';
+
+  try {
+    await updateDoc(doc(db, 'trades', editingTradeId), updatedData);
+    editMsg.textContent = 'cambios guardados';
+    editMsg.className = 'msg ok';
+    setTimeout(() => { closeEditModal(); }, 600);
+  } catch (err) {
+    console.error('Update error:', err);
+    editMsg.textContent = 'error: ' + err.message;
+    editMsg.className = 'msg error';
+  } finally {
+    btnSaveEdit.disabled = false;
+  }
+});
+
+// ===== Toggle revisión =====
 const reviewToggle = document.getElementById('reviewToggle');
 const reviewContent = document.getElementById('reviewContent');
 reviewToggle.addEventListener('click', () => {
@@ -1158,6 +1476,7 @@ reviewToggle.addEventListener('click', () => {
   reviewContent.classList.toggle('open');
 });
 
+// ===== Helpers =====
 function fmtPct(wins, total) {
   if (total === 0) return '—';
   return Math.round((wins / total) * 100) + '%';
@@ -1170,10 +1489,10 @@ function escapeHtml(str) {
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+// ===== Render =====
 function render() {
   document.getElementById('tradeCount').textContent = trades.length;
 
-  // Métricas
   const wins = trades.filter(t => t.r > 0).length;
   const losses = trades.filter(t => t.r < 0).length;
   const be = trades.filter(t => t.r === 0).length;
@@ -1201,7 +1520,6 @@ function render() {
     else if (sr > nr) { boxNoDuda.className = 'has-data-bad'; boxDuda.className = 'has-data-good'; }
   }
 
-  // Gráfico por día
   const profitByDay = [0,0,0,0,0,0,0];
   trades.forEach(t => {
     const d = new Date(t.fecha + 'T' + (t.hora || '12:00') + ':00');
@@ -1233,7 +1551,6 @@ function render() {
     chart.appendChild(wrapper);
   });
 
-  // Historial
   const body = document.getElementById('tradesBody');
   if (trades.length === 0) {
     body.innerHTML = '<tr><td colspan="9" class="empty-state">sin trades registrados · empezá con uno arriba</td></tr>';
@@ -1245,7 +1562,6 @@ function render() {
       const rClass = t.r > 0 ? 'positive' : t.r < 0 ? 'negative' : 'neutral';
       const rSign = t.r > 0 ? '+' : '';
 
-      // Celda de reflexión combinada
       const notasEsc = escapeHtml(t.notas);
       const elimEsc = escapeHtml(t.queEliminaria);
       const repEsc = escapeHtml(t.queRepitiria);
@@ -1268,18 +1584,25 @@ function render() {
           <td><span class="flag ${t.plan === 'no' ? 'warn' : 'ok'}">${t.plan === 'si' ? 'Sí' : 'No'}</span></td>
           <td class="r-value ${rClass}">${rSign}${t.r}R</td>
           <td>${reflexionHtml}</td>
-          <td><button class="delete-btn" data-id="${t.id}" title="Eliminar">✕</button></td>
+          <td>
+            <div class="row-actions">
+              <button class="icon-btn edit" data-id="${t.id}" title="Editar">✎</button>
+              <button class="icon-btn delete" data-id="${t.id}" title="Eliminar">✕</button>
+            </div>
+          </td>
         </tr>
       `;
     }).join('');
-    body.querySelectorAll('.delete-btn').forEach(btn => {
+
+    body.querySelectorAll('.icon-btn.delete').forEach(btn => {
       btn.addEventListener('click', () => deleteTrade(btn.dataset.id));
+    });
+    body.querySelectorAll('.icon-btn.edit').forEach(btn => {
+      btn.addEventListener('click', () => openEditModal(btn.dataset.id));
     });
   }
 
-  // Revisión agrupada
   renderReview();
-
   document.getElementById('storageInfo').textContent = `${trades.length} trades`;
 }
 
