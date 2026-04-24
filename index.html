@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
   --bg: #0f0e0c;
@@ -228,6 +229,67 @@ body {
   flex: 1;
   height: 1px;
   background: var(--border);
+}
+
+/* Section label with action */
+.section-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 14px;
+}
+
+.section-label-row .label-left {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.section-label-row .label-left::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.export-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 8px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.export-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.export-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.export-btn .pdf-icon {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  border: 1px solid currentColor;
+  padding: 1px 4px;
+  letter-spacing: 0;
 }
 
 /* Metrics */
@@ -734,7 +796,7 @@ tbody tr:hover td { background: var(--bg-elev); }
   line-height: 1.5;
 }
 
-/* ===== MODAL DE EDICIÓN ===== */
+/* Modal */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -861,6 +923,33 @@ tbody tr:hover td { background: var(--bg-elev); }
   border-radius: 50%;
   animation: pulse 1s infinite;
 }
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 16px 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text);
+  z-index: 300;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.error { border-color: var(--loss); color: var(--loss); }
+.toast.success { border-color: var(--win); color: var(--win); }
 </style>
 </head>
 <body>
@@ -891,7 +980,7 @@ tbody tr:hover td { background: var(--bg-elev); }
   <header class="header">
     <div>
       <h1>Bitácora</h1>
-      <div class="subtitle">trading behavior log · <em>v0.4</em></div>
+      <div class="subtitle">trading behavior log · <em>v0.5</em></div>
     </div>
     <div class="header-right">
       <div class="user-info">
@@ -1013,7 +1102,16 @@ tbody tr:hover td { background: var(--bg-elev); }
     </div>
   </form>
 
-  <div class="section-label">Historial · <span id="tradeCount">0</span> trades</div>
+  <div class="section-label-row">
+    <div class="label-left">
+      Historial · <span id="tradeCount">0</span> trades
+    </div>
+    <button class="export-btn" id="btnExportPdf" disabled title="Exportar reporte completo en PDF">
+      <span class="pdf-icon">PDF</span>
+      <span>Exportar reporte</span>
+    </button>
+  </div>
+
   <div class="table-wrap">
     <table>
       <thead>
@@ -1059,12 +1157,12 @@ tbody tr:hover td { background: var(--bg-elev); }
   </div>
 
   <footer class="footer">
-    <span>Bitácora v0.4 · Firestore</span>
+    <span>Bitácora v0.5 · Firestore</span>
     <span id="storageInfo">0 trades</span>
   </footer>
 </div>
 
-<!-- MODAL DE EDICIÓN -->
+<!-- Modal de edición -->
 <div class="modal-overlay" id="editModal">
   <div class="modal">
     <button class="modal-close" id="btnCloseModal" title="Cerrar (Esc)">✕</button>
@@ -1158,6 +1256,8 @@ tbody tr:hover td { background: var(--bg-elev); }
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import {
@@ -1201,12 +1301,13 @@ const DAYS = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
 let currentUser = null;
 let trades = [];
 let unsubscribeTrades = null;
-let editingTradeId = null; // id del trade que se está editando
+let editingTradeId = null;
 
 const initialLoader = document.getElementById('initialLoader');
 const loginScreen = document.getElementById('loginScreen');
 const appScreen = document.getElementById('app');
 const loginMsg = document.getElementById('loginMsg');
+const toast = document.getElementById('toast');
 
 function showLogin() {
   initialLoader.classList.add('hidden');
@@ -1221,6 +1322,12 @@ function showApp() {
 function setMsg(text, isError = true) {
   loginMsg.textContent = text;
   loginMsg.className = 'msg' + (isError ? '' : ' ok');
+}
+
+function showToast(message, type = '') {
+  toast.textContent = message;
+  toast.className = 'toast show ' + type;
+  setTimeout(() => { toast.className = 'toast ' + type; }, 3500);
 }
 
 const btnLogin = document.getElementById('btnLogin');
@@ -1309,7 +1416,6 @@ function subscribeToTrades() {
   });
 }
 
-// ===== Crear trade =====
 document.getElementById('tradeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!currentUser) return;
@@ -1352,14 +1458,13 @@ document.getElementById('tradeForm').addEventListener('submit', async (e) => {
   }
 });
 
-// ===== Eliminar trade =====
 async function deleteTrade(id) {
   if (!confirm('¿Eliminar este trade? No se puede deshacer.')) return;
   try { await deleteDoc(doc(db, 'trades', id)); }
   catch (err) { alert('Error al eliminar: ' + err.message); }
 }
 
-// ===== MODAL DE EDICIÓN =====
+// ===== Modal de edición =====
 const editModal = document.getElementById('editModal');
 const editForm = document.getElementById('editForm');
 const editMsg = document.getElementById('editMsg');
@@ -1371,17 +1476,14 @@ function openEditModal(tradeId) {
 
   editingTradeId = tradeId;
 
-  // Pre-cargar valores
   document.getElementById('editFecha').value = trade.fecha || '';
   document.getElementById('editHora').value = trade.hora || '';
   document.getElementById('editPar').value = trade.par || '';
   document.getElementById('editDireccion').value = trade.direccion || 'long';
   document.getElementById('editSetup').value = trade.setup || 'A+';
 
-  // Radio buttons: duda y plan
   const dudaValue = trade.duda || 'no';
   document.querySelector(`input[name="editDuda"][value="${dudaValue}"]`).checked = true;
-
   const planValue = trade.plan || 'si';
   document.querySelector(`input[name="editPlan"][value="${planValue}"]`).checked = true;
 
@@ -1390,7 +1492,6 @@ function openEditModal(tradeId) {
   document.getElementById('editQueEliminaria').value = trade.queEliminaria || '';
   document.getElementById('editQueRepitiria').value = trade.queRepitiria || '';
 
-  // Info en el header del modal
   const rSign = trade.r > 0 ? '+' : '';
   document.getElementById('editingInfo').textContent =
     `${trade.fecha} · ${trade.par} · ${rSign}${trade.r}R`;
@@ -1399,7 +1500,7 @@ function openEditModal(tradeId) {
   editMsg.className = 'msg';
 
   editModal.classList.add('open');
-  document.body.style.overflow = 'hidden'; // evita scroll detrás
+  document.body.style.overflow = 'hidden';
 }
 
 function closeEditModal() {
@@ -1411,18 +1512,11 @@ function closeEditModal() {
 
 document.getElementById('btnCloseModal').addEventListener('click', closeEditModal);
 document.getElementById('btnCancelEdit').addEventListener('click', closeEditModal);
-
-// Cerrar al hacer click en el overlay (fuera del modal)
-editModal.addEventListener('click', (e) => {
-  if (e.target === editModal) closeEditModal();
-});
-
-// Cerrar con ESC
+editModal.addEventListener('click', (e) => { if (e.target === editModal) closeEditModal(); });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && editModal.classList.contains('open')) closeEditModal();
 });
 
-// Guardar edición
 editForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!editingTradeId || !currentUser) return;
@@ -1435,7 +1529,7 @@ editForm.addEventListener('submit', async (e) => {
   }
 
   const updatedData = {
-    userId: currentUser.uid, // obligatorio por las reglas de seguridad
+    userId: currentUser.uid,
     fecha: document.getElementById('editFecha').value,
     hora: document.getElementById('editHora').value,
     par: document.getElementById('editPar').value.toUpperCase().trim(),
@@ -1489,9 +1583,426 @@ function escapeHtml(str) {
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+// ===== EXPORTACIÓN A PDF =====
+const btnExportPdf = document.getElementById('btnExportPdf');
+
+btnExportPdf.addEventListener('click', async () => {
+  if (trades.length === 0) {
+    showToast('No hay trades para exportar', 'error');
+    return;
+  }
+
+  btnExportPdf.disabled = true;
+  const originalHtml = btnExportPdf.innerHTML;
+  btnExportPdf.innerHTML = '<span class="pdf-icon">PDF</span><span>Generando…</span>';
+
+  try {
+    await new Promise(resolve => setTimeout(resolve, 50)); // permite que el UI actualice
+    generatePDF();
+    showToast('PDF generado', 'success');
+  } catch (err) {
+    console.error('PDF error:', err);
+    showToast('Error al generar PDF: ' + err.message, 'error');
+  } finally {
+    btnExportPdf.innerHTML = originalHtml;
+    btnExportPdf.disabled = false;
+  }
+});
+
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
+
+  // Configuración de página
+  const pageWidth = pdf.internal.pageSize.getWidth();   // 210mm
+  const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
+  const marginX = 15;
+  const marginTop = 18;
+  const marginBottom = 18;
+  const contentWidth = pageWidth - (marginX * 2);
+
+  let y = marginTop;
+  let pageNum = 1;
+
+  // Helpers de colores (en RGB)
+  const COLOR_TEXT = [25, 25, 25];
+  const COLOR_DIM = [110, 110, 110];
+  const COLOR_FADED = [160, 160, 160];
+  const COLOR_ACCENT = [180, 140, 60];
+  const COLOR_WIN = [60, 120, 60];
+  const COLOR_LOSS = [180, 60, 60];
+  const COLOR_BORDER = [200, 200, 200];
+
+  // Sort trades (más recientes primero)
+  const sorted = [...trades].sort((a, b) =>
+    (b.fecha + 'T' + (b.hora || '00:00')).localeCompare(a.fecha + 'T' + (a.hora || '00:00'))
+  );
+
+  // Cálculos para el PDF
+  const wins = trades.filter(t => t.r > 0).length;
+  const losses = trades.filter(t => t.r < 0).length;
+  const be = trades.filter(t => t.r === 0).length;
+  const neto = trades.reduce((s, t) => s + t.r, 0);
+
+  const noDuda = trades.filter(t => t.duda === 'no');
+  const siDuda = trades.filter(t => t.duda === 'si');
+  const wrNoDuda = noDuda.length > 0 ? Math.round((noDuda.filter(t=>t.r>0).length / noDuda.length) * 100) : null;
+  const wrSiDuda = siDuda.length > 0 ? Math.round((siDuda.filter(t=>t.r>0).length / siDuda.length) * 100) : null;
+
+  const noPlan = trades.filter(t => t.plan === 'no');
+  const siPlan = trades.filter(t => t.plan === 'si');
+  const wrNoPlan = noPlan.length > 0 ? Math.round((noPlan.filter(t=>t.r>0).length / noPlan.length) * 100) : null;
+  const wrSiPlan = siPlan.length > 0 ? Math.round((siPlan.filter(t=>t.r>0).length / siPlan.length) * 100) : null;
+
+  const profitByDay = [0,0,0,0,0,0,0];
+  trades.forEach(t => {
+    const d = new Date(t.fecha + 'T' + (t.hora || '12:00') + ':00');
+    if (!isNaN(d.getTime())) profitByDay[d.getDay()] += t.r;
+  });
+
+  // Rango de fechas
+  const fechas = sorted.map(t => t.fecha).filter(f => f);
+  const fechaMin = fechas.length ? fechas[fechas.length - 1] : '—';
+  const fechaMax = fechas.length ? fechas[0] : '—';
+
+  // Función auxiliar para añadir texto y manejar saltos de página
+  function ensureSpace(needed) {
+    if (y + needed > pageHeight - marginBottom) {
+      addPageFooter();
+      pdf.addPage();
+      pageNum++;
+      y = marginTop;
+    }
+  }
+
+  function addPageFooter() {
+    const footerY = pageHeight - 10;
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor(...COLOR_FADED);
+    pdf.text(`Bitácora · página ${pageNum}`, marginX, footerY);
+    pdf.text(`generado ${new Date().toLocaleString('es-CO')}`, pageWidth - marginX, footerY, { align: 'right' });
+  }
+
+  function drawHorizontalLine(yPos, color = COLOR_BORDER) {
+    pdf.setDrawColor(...color);
+    pdf.setLineWidth(0.2);
+    pdf.line(marginX, yPos, pageWidth - marginX, yPos);
+  }
+
+  function setText(size, color = COLOR_TEXT, weight = 'normal') {
+    pdf.setFont('helvetica', weight);
+    pdf.setFontSize(size);
+    pdf.setTextColor(...color);
+  }
+
+  // ============= ENCABEZADO =============
+  setText(22, COLOR_TEXT, 'normal');
+  pdf.text('Bitácora', marginX, y);
+
+  setText(8, COLOR_DIM);
+  pdf.text('TRADING JOURNAL · REPORTE COMPLETO', marginX, y + 5);
+
+  setText(8, COLOR_FADED);
+  const fechaGen = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+  pdf.text(fechaGen, pageWidth - marginX, y, { align: 'right' });
+  pdf.text(currentUser.email, pageWidth - marginX, y + 5, { align: 'right' });
+
+  y += 12;
+  drawHorizontalLine(y);
+  y += 8;
+
+  // Resumen del rango
+  setText(9, COLOR_DIM);
+  pdf.text(
+    `Periodo: ${fechaMin} → ${fechaMax}   ·   Total: ${trades.length} ${trades.length === 1 ? 'trade' : 'trades'}`,
+    marginX, y
+  );
+  y += 10;
+
+  // ============= MÉTRICAS =============
+  setText(8, COLOR_DIM, 'bold');
+  pdf.text('MÉTRICAS', marginX, y);
+  y += 5;
+  drawHorizontalLine(y);
+  y += 7;
+
+  // Box de métricas (3 columnas)
+  const colW = contentWidth / 3;
+  const boxStartY = y;
+
+  // Col 1: Winrate total
+  setText(8, COLOR_DIM);
+  pdf.text('WINRATE TOTAL', marginX, y);
+  setText(24, COLOR_TEXT, 'bold');
+  pdf.text(`${trades.length === 0 ? '—' : Math.round((wins/trades.length)*100) + '%'}`, marginX, y + 10);
+  setText(8, COLOR_DIM);
+  pdf.text(`${wins}W · ${losses}L · ${be}BE`, marginX, y + 16);
+  pdf.text(`${neto >= 0 ? '+' : ''}${neto.toFixed(1)}R neto`, marginX, y + 21);
+
+  // Col 2: Duda vs Sin duda
+  const col2X = marginX + colW;
+  setText(8, COLOR_DIM);
+  pdf.text('CON DUDA  vs  SIN DUDA', col2X, y);
+
+  setText(14, wrNoDuda !== null ? COLOR_TEXT : COLOR_FADED, 'bold');
+  pdf.text(`${wrNoDuda !== null ? wrNoDuda + '%' : '—'}`, col2X, y + 10);
+  setText(7, COLOR_FADED);
+  pdf.text(`SIN DUDA · ${noDuda.length} trades`, col2X, y + 14);
+
+  setText(14, wrSiDuda !== null ? COLOR_TEXT : COLOR_FADED, 'bold');
+  pdf.text(`${wrSiDuda !== null ? wrSiDuda + '%' : '—'}`, col2X, y + 21);
+  setText(7, COLOR_FADED);
+  pdf.text(`CON DUDA · ${siDuda.length} trades`, col2X, y + 25);
+
+  // Col 3: Plan vs No plan
+  const col3X = marginX + (colW * 2);
+  setText(8, COLOR_DIM);
+  pdf.text('SIGUIÓ PLAN  vs  NO', col3X, y);
+
+  setText(14, wrSiPlan !== null ? COLOR_TEXT : COLOR_FADED, 'bold');
+  pdf.text(`${wrSiPlan !== null ? wrSiPlan + '%' : '—'}`, col3X, y + 10);
+  setText(7, COLOR_FADED);
+  pdf.text(`SÍ PLAN · ${siPlan.length} trades`, col3X, y + 14);
+
+  setText(14, wrNoPlan !== null ? COLOR_TEXT : COLOR_FADED, 'bold');
+  pdf.text(`${wrNoPlan !== null ? wrNoPlan + '%' : '—'}`, col3X, y + 21);
+  setText(7, COLOR_FADED);
+  pdf.text(`NO PLAN · ${noPlan.length} trades`, col3X, y + 25);
+
+  y = boxStartY + 32;
+
+  // Profit por día
+  setText(8, COLOR_DIM);
+  pdf.text('PROFIT NETO POR DÍA (R)', marginX, y);
+  y += 6;
+
+  const dayColW = contentWidth / 7;
+  for (let i = 0; i < 7; i++) {
+    const dayX = marginX + (dayColW * i) + (dayColW / 2);
+    const p = profitByDay[i];
+
+    setText(9, p > 0 ? COLOR_WIN : p < 0 ? COLOR_LOSS : COLOR_FADED, 'bold');
+    pdf.text(p === 0 ? '—' : `${p > 0 ? '+' : ''}${p.toFixed(1)}`, dayX, y, { align: 'center' });
+
+    setText(7, COLOR_FADED);
+    pdf.text(DAYS[i], dayX, y + 5, { align: 'center' });
+  }
+  y += 12;
+
+  // ============= HISTORIAL DE TRADES =============
+  ensureSpace(20);
+  setText(8, COLOR_DIM, 'bold');
+  pdf.text('HISTORIAL DE TRADES', marginX, y);
+  y += 5;
+  drawHorizontalLine(y);
+  y += 8;
+
+  sorted.forEach((t, idx) => {
+    // Calcular espacio aproximado que va a ocupar este trade
+    const rSign = t.r > 0 ? '+' : '';
+    const hasNotas = t.notas && t.notas.trim();
+    const hasElim = t.queEliminaria && t.queEliminaria.trim();
+    const hasRep = t.queRepitiria && t.queRepitiria.trim();
+
+    // Estimar líneas necesarias para reflexiones
+    let estimatedHeight = 18; // header del trade
+    [t.notas, t.queEliminaria, t.queRepitiria].forEach(text => {
+      if (text && text.trim()) {
+        const lines = pdf.splitTextToSize(text, contentWidth - 8);
+        estimatedHeight += lines.length * 4 + 6;
+      }
+    });
+
+    ensureSpace(estimatedHeight);
+
+    // Línea superior con datos básicos
+    setText(10, COLOR_TEXT, 'bold');
+    pdf.text(`#${trades.length - idx}`, marginX, y);
+
+    setText(10, COLOR_TEXT, 'bold');
+    pdf.text(t.par || '—', marginX + 14, y);
+
+    setText(8, COLOR_DIM);
+    pdf.text(`${t.fecha}${t.hora ? ' · ' + t.hora : ''}`, marginX + 40, y);
+
+    // Dirección
+    const dirColor = t.direccion === 'long' ? COLOR_WIN : COLOR_LOSS;
+    setText(8, dirColor, 'bold');
+    pdf.text((t.direccion || '').toUpperCase(), marginX + 78, y);
+
+    setText(8, COLOR_DIM);
+    pdf.text(`Setup: ${t.setup || '—'}`, marginX + 95, y);
+
+    // Resultado a la derecha
+    const rColor = t.r > 0 ? COLOR_WIN : t.r < 0 ? COLOR_LOSS : COLOR_DIM;
+    setText(11, rColor, 'bold');
+    pdf.text(`${rSign}${t.r}R`, pageWidth - marginX, y, { align: 'right' });
+
+    y += 5;
+
+    // Línea de flags
+    setText(8, COLOR_DIM);
+    const dudaTxt = t.duda === 'si' ? 'Hubo duda' : 'Sin duda';
+    const planTxt = t.plan === 'si' ? 'Siguió plan' : 'NO siguió plan';
+
+    setText(8, t.duda === 'si' ? COLOR_LOSS : COLOR_DIM);
+    pdf.text(dudaTxt, marginX, y);
+
+    setText(8, t.plan === 'no' ? COLOR_LOSS : COLOR_DIM);
+    pdf.text(planTxt, marginX + 32, y);
+
+    y += 6;
+
+    // Reflexiones
+    if (hasNotas) {
+      setText(7, COLOR_FADED, 'bold');
+      pdf.text('NOTAS', marginX, y);
+      y += 3.5;
+      setText(9, COLOR_TEXT);
+      const lines = pdf.splitTextToSize(t.notas, contentWidth - 4);
+      // verificar si las líneas caben
+      if (y + (lines.length * 4) > pageHeight - marginBottom) {
+        addPageFooter();
+        pdf.addPage();
+        pageNum++;
+        y = marginTop;
+      }
+      pdf.text(lines, marginX + 2, y);
+      y += lines.length * 4 + 3;
+    }
+
+    if (hasElim) {
+      setText(7, COLOR_LOSS, 'bold');
+      pdf.text('QUÉ ELIMINARÍA', marginX, y);
+      y += 3.5;
+      setText(9, COLOR_TEXT);
+      const lines = pdf.splitTextToSize(t.queEliminaria, contentWidth - 4);
+      if (y + (lines.length * 4) > pageHeight - marginBottom) {
+        addPageFooter();
+        pdf.addPage();
+        pageNum++;
+        y = marginTop;
+      }
+      pdf.text(lines, marginX + 2, y);
+      y += lines.length * 4 + 3;
+    }
+
+    if (hasRep) {
+      setText(7, COLOR_WIN, 'bold');
+      pdf.text('QUÉ REPETIRÍA', marginX, y);
+      y += 3.5;
+      setText(9, COLOR_TEXT);
+      const lines = pdf.splitTextToSize(t.queRepitiria, contentWidth - 4);
+      if (y + (lines.length * 4) > pageHeight - marginBottom) {
+        addPageFooter();
+        pdf.addPage();
+        pageNum++;
+        y = marginTop;
+      }
+      pdf.text(lines, marginX + 2, y);
+      y += lines.length * 4 + 3;
+    }
+
+    if (!hasNotas && !hasElim && !hasRep) {
+      setText(8, COLOR_FADED, 'italic');
+      pdf.text('— sin reflexiones registradas —', marginX, y);
+      y += 4;
+    }
+
+    // Separador entre trades
+    y += 3;
+    if (idx < sorted.length - 1) {
+      drawHorizontalLine(y, [230, 230, 230]);
+      y += 6;
+    }
+  });
+
+  // ============= REVISIÓN AGRUPADA =============
+  const eliminarEntries = sorted.filter(t => t.queEliminaria && t.queEliminaria.trim());
+  const repetirEntries = sorted.filter(t => t.queRepitiria && t.queRepitiria.trim());
+
+  if (eliminarEntries.length > 0 || repetirEntries.length > 0) {
+    ensureSpace(30);
+    y += 4;
+    setText(8, COLOR_DIM, 'bold');
+    pdf.text('REVISIÓN AGRUPADA · DETECCIÓN DE PATRONES', marginX, y);
+    y += 5;
+    drawHorizontalLine(y);
+    y += 8;
+
+    if (eliminarEntries.length > 0) {
+      ensureSpace(15);
+      setText(13, COLOR_LOSS, 'bold');
+      pdf.text('Qué eliminaría', marginX, y);
+      setText(8, COLOR_FADED);
+      pdf.text(`(${eliminarEntries.length} ${eliminarEntries.length === 1 ? 'entrada' : 'entradas'})`, marginX + 35, y);
+      y += 6;
+
+      eliminarEntries.forEach(t => {
+        const text = t.queEliminaria;
+        const lines = pdf.splitTextToSize(text, contentWidth - 6);
+        const totalH = lines.length * 4 + 6;
+        ensureSpace(totalH);
+
+        setText(9, COLOR_TEXT);
+        pdf.text(lines, marginX + 4, y);
+        y += lines.length * 4;
+
+        setText(7, COLOR_FADED);
+        pdf.text(
+          `${t.fecha} · ${t.par} · ${t.setup} · ${t.r > 0 ? '+' : ''}${t.r}R`,
+          marginX + 4, y + 1
+        );
+        y += 6;
+      });
+      y += 4;
+    }
+
+    if (repetirEntries.length > 0) {
+      ensureSpace(15);
+      setText(13, COLOR_WIN, 'bold');
+      pdf.text('Qué repetiría', marginX, y);
+      setText(8, COLOR_FADED);
+      pdf.text(`(${repetirEntries.length} ${repetirEntries.length === 1 ? 'entrada' : 'entradas'})`, marginX + 33, y);
+      y += 6;
+
+      repetirEntries.forEach(t => {
+        const text = t.queRepitiria;
+        const lines = pdf.splitTextToSize(text, contentWidth - 6);
+        const totalH = lines.length * 4 + 6;
+        ensureSpace(totalH);
+
+        setText(9, COLOR_TEXT);
+        pdf.text(lines, marginX + 4, y);
+        y += lines.length * 4;
+
+        setText(7, COLOR_FADED);
+        pdf.text(
+          `${t.fecha} · ${t.par} · ${t.setup} · ${t.r > 0 ? '+' : ''}${t.r}R`,
+          marginX + 4, y + 1
+        );
+        y += 6;
+      });
+    }
+  }
+
+  // Pie de página final
+  addPageFooter();
+
+  // Guardar
+  const filename = `bitacora_${fechaMin}_a_${fechaMax}.pdf`;
+  pdf.save(filename);
+}
+
 // ===== Render =====
 function render() {
   document.getElementById('tradeCount').textContent = trades.length;
+  btnExportPdf.disabled = trades.length === 0;
 
   const wins = trades.filter(t => t.r > 0).length;
   const losses = trades.filter(t => t.r < 0).length;
