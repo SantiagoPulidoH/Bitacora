@@ -926,6 +926,80 @@
       color: var(--text-dim);
     }
 
+    /* ===== Links de gráficos ===== */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 800px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+
+    .field input[type="url"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+      color-scheme: dark;
+    }
+
+    .field input[type="url"]:focus { border-color: var(--accent); }
+
+    .field input[type="url"].invalid { border-color: var(--loss); }
+
+    /* Celda de gráficos en el historial */
+    .chart-links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 130px;
+    }
+
+    .chart-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      transition: all 0.2s;
+      white-space: nowrap;
+      width: fit-content;
+    }
+
+    .chart-link:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .chart-link .arrow {
+      font-size: 11px;
+      opacity: 0.6;
+    }
+
+    .chart-link:hover .arrow { opacity: 1; }
+
+    .chart-link.pre { border-left: 2px solid #5a4a30; }
+    .chart-link.entrada { border-left: 2px solid var(--accent); }
+
+    .chart-links .none {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-faded);
+    }
+
     /* Revisión agrupada */
     .review-section {
       margin-bottom: 56px;
@@ -1435,6 +1509,18 @@
         </div>
       </div>
 
+      <div class="charts-grid">
+        <div class="field">
+          <label>Qué estoy viendo antes de operación <span class="label-hint">link al gráfico</span></label>
+          <input type="url" id="linkPreOperacion" placeholder="https://…" autocomplete="off" spellcheck="false">
+        </div>
+
+        <div class="field">
+          <label>Qué estoy viendo para entrar <span class="label-hint">link al gráfico</span></label>
+          <input type="url" id="linkEntrada" placeholder="https://…" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+
       <div class="submit-row">
         <span class="helper" id="saveHelper">sincronizado con la nube</span>
         <button type="submit" class="primary" id="submitBtn">Registrar trade</button>
@@ -1463,6 +1549,7 @@
             <th>Plan</th>
             <th>Result.</th>
             <th>Reflexión</th>
+            <th>Gráficos</th>
             <th></th>
           </tr>
         </thead>
@@ -1593,6 +1680,18 @@
           <div class="field">
             <label>Qué repetiría <span class="label-hint">aciertos · qué mantener</span></label>
             <textarea id="editQueRepitiria"></textarea>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="field">
+            <label>Qué estoy viendo antes de operación <span class="label-hint">link al gráfico</span></label>
+            <input type="url" id="editLinkPreOperacion" placeholder="https://…" autocomplete="off" spellcheck="false">
+          </div>
+
+          <div class="field">
+            <label>Qué estoy viendo para entrar <span class="label-hint">link al gráfico</span></label>
+            <input type="url" id="editLinkEntrada" placeholder="https://…" autocomplete="off" spellcheck="false">
           </div>
         </div>
 
@@ -1773,6 +1872,22 @@
 
       const tipoDia = document.querySelector('input[name="tipoDia"]:checked').value;
 
+      // Links de gráficos: se normalizan y validan antes de guardar
+      const rawPre = document.getElementById('linkPreOperacion').value.trim();
+      const rawEntrada = document.getElementById('linkEntrada').value.trim();
+
+      const linkPre = normalizeUrl(rawPre);
+      const linkEnt = normalizeUrl(rawEntrada);
+
+      if (rawPre && !linkPre) {
+        alert('El link de "antes de operación" no es válido. Debe empezar con http:// o https://');
+        return;
+      }
+      if (rawEntrada && !linkEnt) {
+        alert('El link de "para entrar" no es válido. Debe empezar con http:// o https://');
+        return;
+      }
+
       // Construcción del trade según el tipo de día
       let trade;
       if (tipoDia === 'observacion') {
@@ -1786,6 +1901,8 @@
           notas: document.getElementById('notas').value.trim(),
           queEliminaria: document.getElementById('queEliminaria').value.trim(),
           queRepitiria: document.getElementById('queRepitiria').value.trim(),
+          linkPreOperacion: linkPre,
+          linkEntrada: linkEnt,
           createdAt: serverTimestamp()
         };
       } else {
@@ -1807,6 +1924,8 @@
           notas: document.getElementById('notas').value.trim(),
           queEliminaria: document.getElementById('queEliminaria').value.trim(),
           queRepitiria: document.getElementById('queRepitiria').value.trim(),
+          linkPreOperacion: linkPre,
+          linkEntrada: linkEnt,
           createdAt: serverTimestamp()
         };
       }
@@ -1870,6 +1989,8 @@
       document.getElementById('editNotas').value = trade.notas || '';
       document.getElementById('editQueEliminaria').value = trade.queEliminaria || '';
       document.getElementById('editQueRepitiria').value = trade.queRepitiria || '';
+      document.getElementById('editLinkPreOperacion').value = trade.linkPreOperacion || '';
+      document.getElementById('editLinkEntrada').value = trade.linkEntrada || '';
 
       // Info del header del modal
       if (tipoDia === 'observacion') {
@@ -1910,6 +2031,23 @@
 
       const tipoDia = document.querySelector('input[name="editTipoDia"]:checked').value;
 
+      // Links de gráficos: normalizar y validar
+      const rawPre = document.getElementById('editLinkPreOperacion').value.trim();
+      const rawEntrada = document.getElementById('editLinkEntrada').value.trim();
+      const linkPre = normalizeUrl(rawPre);
+      const linkEnt = normalizeUrl(rawEntrada);
+
+      if (rawPre && !linkPre) {
+        editMsg.textContent = 'El link de "antes de operación" no es válido (http:// o https://).';
+        editMsg.className = 'msg error';
+        return;
+      }
+      if (rawEntrada && !linkEnt) {
+        editMsg.textContent = 'El link de "para entrar" no es válido (http:// o https://).';
+        editMsg.className = 'msg error';
+        return;
+      }
+
       let updatedData;
       if (tipoDia === 'observacion') {
         // Convertir a observación: borramos los campos de trade
@@ -1927,6 +2065,8 @@
           notas: document.getElementById('editNotas').value.trim(),
           queEliminaria: document.getElementById('editQueEliminaria').value.trim(),
           queRepitiria: document.getElementById('editQueRepitiria').value.trim(),
+          linkPreOperacion: linkPre,
+          linkEntrada: linkEnt,
           updatedAt: serverTimestamp()
         };
       } else {
@@ -1951,6 +2091,8 @@
           notas: document.getElementById('editNotas').value.trim(),
           queEliminaria: document.getElementById('editQueEliminaria').value.trim(),
           queRepitiria: document.getElementById('editQueRepitiria').value.trim(),
+          linkPreOperacion: linkPre,
+          linkEntrada: linkEnt,
           updatedAt: serverTimestamp()
         };
       }
@@ -2032,6 +2174,60 @@
     // Importante: registros viejos sin "tipoDia" se consideran trades por compatibilidad.
     function isTrade(t) {
       return t.tipoDia !== 'observacion';
+    }
+
+    // ===== Helpers de links de gráficos =====
+    // Normaliza y valida una URL. Devuelve la URL limpia o '' si no es válida.
+    // Solo se aceptan http/https: esto evita que un "javascript:..." termine dentro de un href.
+    function normalizeUrl(raw) {
+      if (!raw) return '';
+      let candidate = String(raw).trim();
+      if (!candidate) return '';
+
+      // Si no trae protocolo, asumimos https
+      if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(candidate)) {
+        candidate = 'https://' + candidate;
+      }
+
+      try {
+        const url = new URL(candidate);
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') return '';
+        return url.href;
+      } catch (e) {
+        return '';
+      }
+    }
+
+    // Extrae el dominio para mostrarlo como etiqueta corta
+    function hostFromUrl(url) {
+      try { return new URL(url).hostname.replace(/^www\./, ''); }
+      catch (e) { return 'link'; }
+    }
+
+    // Construye la celda de links del historial.
+    // Se re-valida al renderizar (no solo al guardar) por si un registro viejo
+    // o editado desde la consola de Firestore trae algo raro.
+    function chartLinksHtml(t) {
+      const pre = normalizeUrl(t.linkPreOperacion);
+      const ent = normalizeUrl(t.linkEntrada);
+
+      if (!pre && !ent) {
+        return '<div class="chart-links"><span class="none">—</span></div>';
+      }
+
+      let html = '<div class="chart-links">';
+      if (pre) {
+        html += `<a class="chart-link pre" href="${escapeHtml(pre)}" target="_blank" rel="noopener noreferrer" title="Antes de operación · ${escapeHtml(hostFromUrl(pre))}">
+          <span>Pre</span><span class="arrow">↗</span>
+        </a>`;
+      }
+      if (ent) {
+        html += `<a class="chart-link entrada" href="${escapeHtml(ent)}" target="_blank" rel="noopener noreferrer" title="Para entrar · ${escapeHtml(hostFromUrl(ent))}">
+          <span>Entrada</span><span class="arrow">↗</span>
+        </a>`;
+      }
+      html += '</div>';
+      return html;
     }
 
     // ===== EXPORTACIÓN A PDF =====
@@ -2332,6 +2528,10 @@
             estimatedHeight += lines.length * 4 + 6;
           }
         });
+        // Espacio extra si hay links de gráficos
+        if (normalizeUrl(t.linkPreOperacion)) estimatedHeight += 4;
+        if (normalizeUrl(t.linkEntrada)) estimatedHeight += 4;
+        if (normalizeUrl(t.linkPreOperacion) || normalizeUrl(t.linkEntrada)) estimatedHeight += 5;
 
         ensureSpace(estimatedHeight);
 
@@ -2439,6 +2639,36 @@
           setText(8, COLOR_FADED, 'italic');
           pdf.text('— sin reflexiones registradas —', marginX, y);
           y += 4;
+        }
+
+        // Links de gráficos (clickeables en el PDF)
+        const pdfLinkPre = normalizeUrl(t.linkPreOperacion);
+        const pdfLinkEnt = normalizeUrl(t.linkEntrada);
+
+        if (pdfLinkPre || pdfLinkEnt) {
+          ensureSpace(12);
+          setText(7, COLOR_FADED, 'bold');
+          pdf.text('GRÁFICOS', marginX, y);
+          y += 3.5;
+
+          if (pdfLinkPre) {
+            setText(8, COLOR_DIM);
+            pdf.text('Antes de operación:', marginX + 2, y);
+            setText(8, COLOR_ACCENT);
+            const preLines = pdf.splitTextToSize(pdfLinkPre, contentWidth - 40);
+            pdf.textWithLink(preLines[0], marginX + 36, y, { url: pdfLinkPre });
+            y += 4;
+          }
+
+          if (pdfLinkEnt) {
+            setText(8, COLOR_DIM);
+            pdf.text('Para entrar:', marginX + 2, y);
+            setText(8, COLOR_ACCENT);
+            const entLines = pdf.splitTextToSize(pdfLinkEnt, contentWidth - 40);
+            pdf.textWithLink(entLines[0], marginX + 36, y, { url: pdfLinkEnt });
+            y += 4;
+          }
+          y += 1;
         }
 
         // Separador entre trades
@@ -2649,7 +2879,7 @@
       // ===== HISTORIAL =====
       const body = document.getElementById('tradesBody');
       if (trades.length === 0) {
-        body.innerHTML = '<tr><td colspan="9" class="empty-state">sin registros · empezá con uno arriba</td></tr>';
+        body.innerHTML = '<tr><td colspan="10" class="empty-state">sin registros · empezá con uno arriba</td></tr>';
       } else {
         const sorted = [...trades].sort((a, b) =>
           (b.fecha + 'T' + (b.hora || '00:00')).localeCompare(a.fecha + 'T' + (a.hora || '00:00'))
@@ -2681,6 +2911,7 @@
             <td><span class="r-value obs">—</span></td>
             <td><span class="r-value obs">no trade</span></td>
             <td>${reflexionHtml}</td>
+            <td>${chartLinksHtml(t)}</td>
             <td>
               <div class="row-actions">
                 <button class="icon-btn edit" data-id="${t.id}" title="Editar">✎</button>
@@ -2704,6 +2935,7 @@
           <td><span class="flag ${t.plan === 'no' ? 'warn' : 'ok'}">${t.plan === 'si' ? 'Sí' : 'No'}</span></td>
           <td class="r-value ${rClass}">${rSign}${t.r}R</td>
           <td>${reflexionHtml}</td>
+          <td>${chartLinksHtml(t)}</td>
           <td>
             <div class="row-actions">
               <button class="icon-btn edit" data-id="${t.id}" title="Editar">✎</button>
