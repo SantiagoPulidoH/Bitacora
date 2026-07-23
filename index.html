@@ -938,7 +938,21 @@
       .charts-grid { grid-template-columns: 1fr; }
     }
 
-    .field input[type="url"] {
+    .link-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .link-row {
+      display: flex;
+      gap: 6px;
+      align-items: stretch;
+    }
+
+    .link-row input[type="url"] {
+      flex: 1;
+      min-width: 0;
       background: var(--bg);
       border: 1px solid var(--border);
       color: var(--text);
@@ -950,33 +964,109 @@
       color-scheme: dark;
     }
 
-    .field input[type="url"]:focus { border-color: var(--accent); }
+    .link-row input[type="url"]:focus { border-color: var(--accent); }
 
-    .field input[type="url"].invalid { border-color: var(--loss); }
+    .link-row .link-index {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-faded);
+      user-select: none;
+    }
+
+    .link-remove {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-faded);
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      padding: 0 11px;
+      line-height: 1;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .link-remove:hover {
+      border-color: var(--loss);
+      color: var(--loss);
+    }
+
+    .link-add {
+      background: transparent;
+      border: 1px dashed var(--border);
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 9px 12px;
+      margin-top: 8px;
+      transition: all 0.2s;
+      width: 100%;
+      text-align: center;
+    }
+
+    .link-add:hover {
+      border-color: var(--accent);
+      border-style: solid;
+      color: var(--accent);
+    }
+
+    .link-add .plus {
+      font-size: 12px;
+      margin-right: 4px;
+    }
 
     /* Celda de gráficos en el historial */
     .chart-links {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
       min-width: 130px;
+    }
+
+    .chart-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .chart-group-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-faded);
+      margin-bottom: 1px;
+    }
+
+    .chart-group.pre .chart-group-label { color: #8a7550; }
+    .chart-group.entrada .chart-group-label { color: var(--accent); }
+
+    .chart-group-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
     }
 
     .chart-link {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 10px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      letter-spacing: 0.06em;
       color: var(--text-dim);
       text-decoration: none;
       border: 1px solid var(--border);
-      padding: 6px 10px;
+      padding: 5px 9px;
       transition: all 0.2s;
       white-space: nowrap;
-      width: fit-content;
     }
 
     .chart-link:hover {
@@ -985,14 +1075,14 @@
     }
 
     .chart-link .arrow {
-      font-size: 11px;
+      font-size: 10px;
       opacity: 0.6;
     }
 
     .chart-link:hover .arrow { opacity: 1; }
 
-    .chart-link.pre { border-left: 2px solid #5a4a30; }
-    .chart-link.entrada { border-left: 2px solid var(--accent); }
+    .chart-group.pre .chart-link { border-left: 2px solid #5a4a30; }
+    .chart-group.entrada .chart-link { border-left: 2px solid var(--accent); }
 
     .chart-links .none {
       font-family: 'JetBrains Mono', monospace;
@@ -1511,13 +1601,15 @@
 
       <div class="charts-grid">
         <div class="field">
-          <label>Qué estoy viendo antes de operación <span class="label-hint">link al gráfico</span></label>
-          <input type="url" id="linkPreOperacion" placeholder="https://…" autocomplete="off" spellcheck="false">
+          <label>Qué estoy viendo antes de operación <span class="label-hint">uno o varios links</span></label>
+          <div class="link-list" id="linkListPre"></div>
+          <button type="button" class="link-add" data-list="linkListPre"><span class="plus">+</span>Agregar link</button>
         </div>
 
         <div class="field">
-          <label>Qué estoy viendo para entrar <span class="label-hint">link al gráfico</span></label>
-          <input type="url" id="linkEntrada" placeholder="https://…" autocomplete="off" spellcheck="false">
+          <label>Qué estoy viendo para entrar <span class="label-hint">uno o varios links</span></label>
+          <div class="link-list" id="linkListEntrada"></div>
+          <button type="button" class="link-add" data-list="linkListEntrada"><span class="plus">+</span>Agregar link</button>
         </div>
       </div>
 
@@ -1685,13 +1777,15 @@
 
         <div class="charts-grid">
           <div class="field">
-            <label>Qué estoy viendo antes de operación <span class="label-hint">link al gráfico</span></label>
-            <input type="url" id="editLinkPreOperacion" placeholder="https://…" autocomplete="off" spellcheck="false">
+            <label>Qué estoy viendo antes de operación <span class="label-hint">uno o varios links</span></label>
+            <div class="link-list" id="editLinkListPre"></div>
+            <button type="button" class="link-add" data-list="editLinkListPre"><span class="plus">+</span>Agregar link</button>
           </div>
 
           <div class="field">
-            <label>Qué estoy viendo para entrar <span class="label-hint">link al gráfico</span></label>
-            <input type="url" id="editLinkEntrada" placeholder="https://…" autocomplete="off" spellcheck="false">
+            <label>Qué estoy viendo para entrar <span class="label-hint">uno o varios links</span></label>
+            <div class="link-list" id="editLinkListEntrada"></div>
+            <button type="button" class="link-add" data-list="editLinkListEntrada"><span class="plus">+</span>Agregar link</button>
           </div>
         </div>
 
@@ -1873,20 +1967,20 @@
       const tipoDia = document.querySelector('input[name="tipoDia"]:checked').value;
 
       // Links de gráficos: se normalizan y validan antes de guardar
-      const rawPre = document.getElementById('linkPreOperacion').value.trim();
-      const rawEntrada = document.getElementById('linkEntrada').value.trim();
+      const pre = collectLinkList('linkListPre');
+      const ent = collectLinkList('linkListEntrada');
 
-      const linkPre = normalizeUrl(rawPre);
-      const linkEnt = normalizeUrl(rawEntrada);
-
-      if (rawPre && !linkPre) {
-        alert('El link de "antes de operación" no es válido. Debe empezar con http:// o https://');
+      if (pre.invalidos.length > 0) {
+        alert('Hay links inválidos en "antes de operación":\n\n' + pre.invalidos.join('\n') + '\n\nDeben empezar con http:// o https://');
         return;
       }
-      if (rawEntrada && !linkEnt) {
-        alert('El link de "para entrar" no es válido. Debe empezar con http:// o https://');
+      if (ent.invalidos.length > 0) {
+        alert('Hay links inválidos en "para entrar":\n\n' + ent.invalidos.join('\n') + '\n\nDeben empezar con http:// o https://');
         return;
       }
+
+      const linkPre = pre.urls;
+      const linkEnt = ent.urls;
 
       // Construcción del trade según el tipo de día
       let trade;
@@ -1942,6 +2036,9 @@
         // Volver al modo "trade ejecutado" por default
         document.getElementById('tipoDia-trade').checked = true;
         applyDayTypeToMainForm();
+        // Limpiar las listas de links (reset() no elimina las filas agregadas)
+        resetLinkList('linkListPre');
+        resetLinkList('linkListEntrada');
       } catch (err) {
         console.error('Save error:', err);
         alert('No se pudo guardar: ' + err.message);
@@ -1989,8 +2086,8 @@
       document.getElementById('editNotas').value = trade.notas || '';
       document.getElementById('editQueEliminaria').value = trade.queEliminaria || '';
       document.getElementById('editQueRepitiria').value = trade.queRepitiria || '';
-      document.getElementById('editLinkPreOperacion').value = trade.linkPreOperacion || '';
-      document.getElementById('editLinkEntrada').value = trade.linkEntrada || '';
+      setLinkList('editLinkListPre', trade.linkPreOperacion);
+      setLinkList('editLinkListEntrada', trade.linkEntrada);
 
       // Info del header del modal
       if (tipoDia === 'observacion') {
@@ -2032,21 +2129,22 @@
       const tipoDia = document.querySelector('input[name="editTipoDia"]:checked').value;
 
       // Links de gráficos: normalizar y validar
-      const rawPre = document.getElementById('editLinkPreOperacion').value.trim();
-      const rawEntrada = document.getElementById('editLinkEntrada').value.trim();
-      const linkPre = normalizeUrl(rawPre);
-      const linkEnt = normalizeUrl(rawEntrada);
+      const pre = collectLinkList('editLinkListPre');
+      const ent = collectLinkList('editLinkListEntrada');
 
-      if (rawPre && !linkPre) {
-        editMsg.textContent = 'El link de "antes de operación" no es válido (http:// o https://).';
+      if (pre.invalidos.length > 0) {
+        editMsg.textContent = 'Link inválido en "antes de operación": ' + pre.invalidos[0];
         editMsg.className = 'msg error';
         return;
       }
-      if (rawEntrada && !linkEnt) {
-        editMsg.textContent = 'El link de "para entrar" no es válido (http:// o https://).';
+      if (ent.invalidos.length > 0) {
+        editMsg.textContent = 'Link inválido en "para entrar": ' + ent.invalidos[0];
         editMsg.className = 'msg error';
         return;
       }
+
+      const linkPre = pre.urls;
+      const linkEnt = ent.urls;
 
       let updatedData;
       if (tipoDia === 'observacion') {
@@ -2198,36 +2296,157 @@
       }
     }
 
+    // Lee el campo de links de un registro y devuelve SIEMPRE un array de URLs válidas.
+    // Acepta los dos formatos por compatibilidad:
+    //   - registros viejos: string único  → ['url']
+    //   - registros nuevos: array         → ['url1','url2']
+    function getLinks(value) {
+      if (!value) return [];
+      const list = Array.isArray(value) ? value : [value];
+      return list.map(normalizeUrl).filter(Boolean);
+    }
+
     // Extrae el dominio para mostrarlo como etiqueta corta
     function hostFromUrl(url) {
       try { return new URL(url).hostname.replace(/^www\./, ''); }
       catch (e) { return 'link'; }
     }
 
+    // ===== Manejo de las listas dinámicas de inputs =====
+    // Agrega una fila de input a una lista. Si la lista tiene más de una fila,
+    // se numeran para que quede claro cuál es cuál.
+    function addLinkRow(listId, value = '', focus = false) {
+      const list = document.getElementById(listId);
+      if (!list) return;
+
+      const row = document.createElement('div');
+      row.className = 'link-row';
+
+      const index = document.createElement('span');
+      index.className = 'link-index';
+
+      const input = document.createElement('input');
+      input.type = 'url';
+      input.placeholder = 'https://…';
+      input.autocomplete = 'off';
+      input.spellcheck = false;
+      input.value = value;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'link-remove';
+      removeBtn.title = 'Quitar este link';
+      removeBtn.textContent = '✕';
+      removeBtn.addEventListener('click', () => {
+        // Si es la única fila, la vaciamos en vez de eliminarla:
+        // así el campo nunca queda sin ningún input visible.
+        if (list.querySelectorAll('.link-row').length === 1) {
+          input.value = '';
+          input.focus();
+        } else {
+          row.remove();
+          refreshLinkIndices(listId);
+        }
+      });
+
+      row.appendChild(index);
+      row.appendChild(input);
+      row.appendChild(removeBtn);
+      list.appendChild(row);
+
+      refreshLinkIndices(listId);
+      if (focus) input.focus();
+    }
+
+    // Numera las filas solo cuando hay más de una
+    function refreshLinkIndices(listId) {
+      const list = document.getElementById(listId);
+      if (!list) return;
+      const rows = list.querySelectorAll('.link-row');
+      rows.forEach((row, i) => {
+        const idx = row.querySelector('.link-index');
+        if (idx) idx.textContent = rows.length > 1 ? String(i + 1) : '';
+      });
+    }
+
+    // Vacía la lista y la deja con una sola fila vacía
+    function resetLinkList(listId) {
+      const list = document.getElementById(listId);
+      if (!list) return;
+      list.innerHTML = '';
+      addLinkRow(listId, '');
+    }
+
+    // Carga un array (o string viejo) dentro de la lista de inputs
+    function setLinkList(listId, value) {
+      const list = document.getElementById(listId);
+      if (!list) return;
+      list.innerHTML = '';
+      const urls = getLinks(value);
+      if (urls.length === 0) {
+        addLinkRow(listId, '');
+      } else {
+        urls.forEach(u => addLinkRow(listId, u));
+      }
+    }
+
+    // Recoge los valores de una lista.
+    // Devuelve { urls: [...], invalidos: [...] } para poder avisar al usuario.
+    function collectLinkList(listId) {
+      const list = document.getElementById(listId);
+      const urls = [];
+      const invalidos = [];
+      if (!list) return { urls, invalidos };
+
+      list.querySelectorAll('input[type="url"]').forEach(input => {
+        const raw = input.value.trim();
+        if (!raw) return;
+        const clean = normalizeUrl(raw);
+        if (clean) {
+          if (!urls.includes(clean)) urls.push(clean); // evita duplicados exactos
+        } else {
+          invalidos.push(raw);
+        }
+      });
+      return { urls, invalidos };
+    }
+
+    // Botones "+ Agregar link" (funcionan tanto en el form principal como en el modal)
+    document.querySelectorAll('.link-add').forEach(btn => {
+      btn.addEventListener('click', () => {
+        addLinkRow(btn.dataset.list, '', true);
+      });
+    });
+
     // Construye la celda de links del historial.
     // Se re-valida al renderizar (no solo al guardar) por si un registro viejo
     // o editado desde la consola de Firestore trae algo raro.
     function chartLinksHtml(t) {
-      const pre = normalizeUrl(t.linkPreOperacion);
-      const ent = normalizeUrl(t.linkEntrada);
+      const pre = getLinks(t.linkPreOperacion);
+      const ent = getLinks(t.linkEntrada);
 
-      if (!pre && !ent) {
+      if (pre.length === 0 && ent.length === 0) {
         return '<div class="chart-links"><span class="none">—</span></div>';
       }
 
-      let html = '<div class="chart-links">';
-      if (pre) {
-        html += `<a class="chart-link pre" href="${escapeHtml(pre)}" target="_blank" rel="noopener noreferrer" title="Antes de operación · ${escapeHtml(hostFromUrl(pre))}">
-          <span>Pre</span><span class="arrow">↗</span>
-        </a>`;
+      function grupo(urls, clase, etiqueta) {
+        if (urls.length === 0) return '';
+        const items = urls.map((u, i) => {
+          const num = urls.length > 1 ? ` ${i + 1}` : '';
+          return `<a class="chart-link" href="${escapeHtml(u)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(etiqueta)} · ${escapeHtml(hostFromUrl(u))}">
+            <span>Ver${num}</span><span class="arrow">↗</span>
+          </a>`;
+        }).join('');
+        return `<div class="chart-group ${clase}">
+          <span class="chart-group-label">${escapeHtml(etiqueta)}</span>
+          <div class="chart-group-items">${items}</div>
+        </div>`;
       }
-      if (ent) {
-        html += `<a class="chart-link entrada" href="${escapeHtml(ent)}" target="_blank" rel="noopener noreferrer" title="Para entrar · ${escapeHtml(hostFromUrl(ent))}">
-          <span>Entrada</span><span class="arrow">↗</span>
-        </a>`;
-      }
-      html += '</div>';
-      return html;
+
+      return `<div class="chart-links">
+        ${grupo(pre, 'pre', 'Pre')}
+        ${grupo(ent, 'entrada', 'Entrada')}
+      </div>`;
     }
 
     // ===== EXPORTACIÓN A PDF =====
@@ -2529,9 +2748,11 @@
           }
         });
         // Espacio extra si hay links de gráficos
-        if (normalizeUrl(t.linkPreOperacion)) estimatedHeight += 4;
-        if (normalizeUrl(t.linkEntrada)) estimatedHeight += 4;
-        if (normalizeUrl(t.linkPreOperacion) || normalizeUrl(t.linkEntrada)) estimatedHeight += 5;
+        const linksPre = getLinks(t.linkPreOperacion);
+        const linksEnt = getLinks(t.linkEntrada);
+        if (linksPre.length > 0 || linksEnt.length > 0) {
+          estimatedHeight += 6 + (linksPre.length + linksEnt.length) * 4;
+        }
 
         ensureSpace(estimatedHeight);
 
@@ -2642,31 +2863,43 @@
         }
 
         // Links de gráficos (clickeables en el PDF)
-        const pdfLinkPre = normalizeUrl(t.linkPreOperacion);
-        const pdfLinkEnt = normalizeUrl(t.linkEntrada);
+        const pdfLinksPre = getLinks(t.linkPreOperacion);
+        const pdfLinksEnt = getLinks(t.linkEntrada);
 
-        if (pdfLinkPre || pdfLinkEnt) {
-          ensureSpace(12);
+        if (pdfLinksPre.length > 0 || pdfLinksEnt.length > 0) {
+          ensureSpace(10 + (pdfLinksPre.length + pdfLinksEnt.length) * 4);
           setText(7, COLOR_FADED, 'bold');
           pdf.text('GRÁFICOS', marginX, y);
           y += 3.5;
 
-          if (pdfLinkPre) {
+          if (pdfLinksPre.length > 0) {
             setText(8, COLOR_DIM);
             pdf.text('Antes de operación:', marginX + 2, y);
-            setText(8, COLOR_ACCENT);
-            const preLines = pdf.splitTextToSize(pdfLinkPre, contentWidth - 40);
-            pdf.textWithLink(preLines[0], marginX + 36, y, { url: pdfLinkPre });
-            y += 4;
+            pdfLinksPre.forEach((url, i) => {
+              if (y > pageHeight - marginBottom - 5) {
+                addPageFooter(); pdf.addPage(); pageNum++; y = marginTop;
+              }
+              setText(8, COLOR_ACCENT);
+              const label = pdfLinksPre.length > 1 ? `[${i + 1}] ${url}` : url;
+              const shown = pdf.splitTextToSize(label, contentWidth - 40)[0];
+              pdf.textWithLink(shown, marginX + 36, y, { url: url });
+              y += 4;
+            });
           }
 
-          if (pdfLinkEnt) {
+          if (pdfLinksEnt.length > 0) {
             setText(8, COLOR_DIM);
             pdf.text('Para entrar:', marginX + 2, y);
-            setText(8, COLOR_ACCENT);
-            const entLines = pdf.splitTextToSize(pdfLinkEnt, contentWidth - 40);
-            pdf.textWithLink(entLines[0], marginX + 36, y, { url: pdfLinkEnt });
-            y += 4;
+            pdfLinksEnt.forEach((url, i) => {
+              if (y > pageHeight - marginBottom - 5) {
+                addPageFooter(); pdf.addPage(); pageNum++; y = marginTop;
+              }
+              setText(8, COLOR_ACCENT);
+              const label = pdfLinksEnt.length > 1 ? `[${i + 1}] ${url}` : url;
+              const shown = pdf.splitTextToSize(label, contentWidth - 40)[0];
+              pdf.textWithLink(shown, marginX + 36, y, { url: url });
+              y += 4;
+            });
           }
           y += 1;
         }
@@ -3017,6 +3250,12 @@
 
     setDefaultDateTime();
     applyDayTypeToMainForm();
+
+    // Cada lista arranca con una fila vacía
+    resetLinkList('linkListPre');
+    resetLinkList('linkListEntrada');
+    resetLinkList('editLinkListPre');
+    resetLinkList('editLinkListEntrada');
   </script>
 
 </body>
