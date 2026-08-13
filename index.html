@@ -525,6 +525,202 @@
       }
     }
 
+    /* ===== Checklist del plan (I.M.C) ===== */
+    .plan-checklist {
+      grid-column: 1 / -1;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      margin-top: 4px;
+    }
+
+    .plan-header {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      padding: 16px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      text-align: left;
+      transition: background 0.15s;
+    }
+
+    .plan-header:hover { background: var(--bg-elev); }
+
+    .plan-header .ph-left {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .plan-header .ph-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .plan-header .ph-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+    }
+
+    .plan-header .ph-bar {
+      width: 90px;
+      height: 4px;
+      background: var(--border);
+      position: relative;
+      overflow: hidden;
+      align-self: center;
+    }
+
+    .plan-header .ph-bar-fill {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.25s;
+    }
+
+    .plan-header .ph-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .plan-header .chevron {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-dim);
+      font-size: 14px;
+      transition: transform 0.3s;
+    }
+
+    .plan-header.open .chevron { transform: rotate(90deg); }
+
+    .plan-body {
+      display: none;
+      padding: 8px 20px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .plan-body.open { display: block; }
+
+    .plan-phase {
+      margin-top: 18px;
+    }
+
+    .plan-phase:first-child { margin-top: 8px; }
+
+    .plan-phase-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .plan-phase-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .plan-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 7px 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .plan-item input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 1px;
+      position: relative;
+      transition: all 0.15s;
+    }
+
+    .plan-item input[type="checkbox"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .plan-item input[type="checkbox"]:checked::after {
+      content: '✓';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -52%);
+      color: var(--bg);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .plan-item-label {
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--text-dim);
+    }
+
+    .plan-item input:checked ~ .plan-item-label { color: var(--text); }
+
+    /* Celda del plan en el historial */
+    .plan-cell {
+      min-width: 120px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .plan-cell .adh {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .plan-cell .adh.high { color: var(--win); }
+    .plan-cell .adh.mid { color: var(--accent); }
+    .plan-cell .adh.low { color: var(--loss); }
+
+    .plan-cell .adh-sub {
+      font-size: 9px;
+      color: var(--text-faded);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .plan-cell .legacy {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .plan-cell .legacy-note {
+      font-size: 8px;
+      color: var(--text-faded);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
     /* Tipo de día selector */
     .day-type-row {
       display: grid;
@@ -597,6 +793,12 @@
       font-style: italic;
       text-transform: lowercase;
       letter-spacing: 0;
+    }
+
+    /* El checklist del plan también se atenúa en observación */
+    .plan-checklist.disabled-for-obs {
+      opacity: 0.35;
+      pointer-events: none;
     }
 
     /* Badge de observación en historial */
@@ -1563,20 +1765,24 @@
           </div>
         </div>
 
-        <div class="field" id="field-plan">
-          <label>¿Seguí el plan?</label>
-          <div class="toggle">
-            <input type="radio" name="plan" id="plan-si" value="si" checked>
-            <label for="plan-si">Sí</label>
-            <input type="radio" name="plan" id="plan-no" value="no">
-            <label for="plan-no">No</label>
-          </div>
-        </div>
-
         <div class="field" id="field-resultado">
           <label>Resultado (R)</label>
           <input type="number" id="resultado" step="0.1" placeholder="+2.0 / -1.0 / 0">
         </div>
+      </div>
+
+      <div class="plan-checklist" id="field-plan">
+        <button type="button" class="plan-header" id="planHeader">
+          <div class="ph-left">
+            <span class="ph-title">Plan I.M.C · adherencia</span>
+            <span class="ph-count" id="planCount">0 / 15</span>
+            <span class="ph-bar"><span class="ph-bar-fill" id="planBarFill"></span></span>
+          </div>
+          <div class="ph-right">
+            <span class="chevron">›</span>
+          </div>
+        </button>
+        <div class="plan-body" id="planBody"></div>
       </div>
 
       <div class="reflection-grid">
@@ -1742,20 +1948,24 @@
             </div>
           </div>
 
-          <div class="field" id="edit-field-plan">
-            <label>¿Seguí el plan?</label>
-            <div class="toggle">
-              <input type="radio" name="editPlan" id="editPlan-si" value="si">
-              <label for="editPlan-si">Sí</label>
-              <input type="radio" name="editPlan" id="editPlan-no" value="no">
-              <label for="editPlan-no">No</label>
-            </div>
-          </div>
-
           <div class="field" id="edit-field-resultado">
             <label>Resultado (R)</label>
             <input type="number" id="editResultado" step="0.1">
           </div>
+        </div>
+
+        <div class="plan-checklist" id="edit-field-plan">
+          <button type="button" class="plan-header" id="editPlanHeader">
+            <div class="ph-left">
+              <span class="ph-title">Plan I.M.C · adherencia</span>
+              <span class="ph-count" id="editPlanCount">0 / 15</span>
+              <span class="ph-bar"><span class="ph-bar-fill" id="editPlanBarFill"></span></span>
+            </div>
+            <div class="ph-right">
+              <span class="chevron">›</span>
+            </div>
+          </button>
+          <div class="plan-body" id="editPlanBody"></div>
         </div>
 
         <div class="reflection-grid">
@@ -1841,6 +2051,40 @@
     setPersistence(auth, browserLocalPersistence);
 
     const DAYS = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+
+    // ===== Plan de trading I.M.C =====
+    // Cada item tiene un id estable (NO cambiar los ids: son la clave con la que
+    // se guardan en la base de datos). El texto sí se puede editar sin romper nada.
+    const PLAN_IMC = [
+      { fase: 'Time Frame H1–H4', items: [
+        { id: 'niveles_pdh_pdl',        label: 'Marcar niveles clave: PDH / PDL' },
+        { id: 'niveles_pwh_pwl',        label: 'Marcar niveles clave: PWH / PWL' },
+        { id: 'niveles_sesiones',       label: 'Marcar niveles clave: Altos/Bajos de sesiones previas' },
+        { id: 'niveles_estructura',     label: 'Marcar niveles clave: Estructura clara' },
+        { id: 'zonas_ob_fvg_mechas',    label: 'Zonas de reversión y liquidez: OB, FVG, MECHAS' },
+      ]},
+      { fase: 'Detonador H1–H4', items: [
+        { id: 'barrio_nivel_mitigo',    label: 'Esperar que el precio barra un nivel clave y mitigue algo' },
+        { id: 'mitiga_fvg',             label: 'Mitiga / Rellena FVG' },
+        { id: 'mitiga_ob',              label: 'Mitiga OB' },
+        { id: 'mitiga_mecha',           label: 'Mitiga Mecha' },
+        { id: 'divergencia_dxy',        label: 'Adicional: Divergencia con DXY' },
+      ]},
+      { fase: 'Confirmación M1–M2 (después de la mitigación)', items: [
+        { id: 'giro_3_velas',           label: 'Giro de 3 velas' },
+        { id: 'impulso',                label: 'Impulso' },
+        { id: 'choch',                  label: 'Choch' },
+        { id: 'fvg_confirmacion',       label: 'FVG' },
+        { id: 'vela_gatillo_fvg',       label: 'Vela gatillo en el retorno al FVG' },
+      ]},
+    ];
+
+    // Lista plana de todos los ids, para contar y calcular adherencia
+    const PLAN_IMC_IDS = PLAN_IMC.flatMap(f => f.items.map(i => i.id));
+    const PLAN_IMC_TOTAL = PLAN_IMC_IDS.length; // 15
+    // Mapa id → label, para mostrar en historial/PDF
+    const PLAN_IMC_LABELS = {};
+    PLAN_IMC.forEach(f => f.items.forEach(i => { PLAN_IMC_LABELS[i.id] = i.label; }));
 
     let currentUser = null;
     let trades = [];
@@ -1982,6 +2226,9 @@
       const linkPre = pre.urls;
       const linkEnt = ent.urls;
 
+      // Items del plan I.M.C marcados
+      const planItems = getCheckedPlanItems('plan');
+
       // Construcción del trade según el tipo de día
       let trade;
       if (tipoDia === 'observacion') {
@@ -2013,7 +2260,7 @@
           direccion: document.getElementById('direccion').value,
           setup: document.getElementById('setup').value,
           duda: document.querySelector('input[name="duda"]:checked').value,
-          plan: document.querySelector('input[name="plan"]:checked').value,
+          planItems: planItems,
           r: r,
           notas: document.getElementById('notas').value.trim(),
           queEliminaria: document.getElementById('queEliminaria').value.trim(),
@@ -2039,6 +2286,10 @@
         // Limpiar las listas de links (reset() no elimina las filas agregadas)
         resetLinkList('linkListPre');
         resetLinkList('linkListEntrada');
+        // Desmarcar el checklist del plan y cerrarlo
+        setCheckedPlanItems('plan', []);
+        document.getElementById('planHeader').classList.remove('open');
+        document.getElementById('planBody').classList.remove('open');
       } catch (err) {
         console.error('Save error:', err);
         alert('No se pudo guardar: ' + err.message);
@@ -2079,8 +2330,11 @@
 
       const dudaValue = trade.duda || 'no';
       document.querySelector(`input[name="editDuda"][value="${dudaValue}"]`).checked = true;
-      const planValue = trade.plan || 'si';
-      document.querySelector(`input[name="editPlan"][value="${planValue}"]`).checked = true;
+
+      // Plan: si el registro ya usa checklist, marcamos sus items.
+      // Si es un registro viejo (plan si/no), el checklist arranca vacío
+      // (no podemos saber qué items marcó) y se muestra un aviso.
+      setCheckedPlanItems('editPlan', Array.isArray(trade.planItems) ? trade.planItems : []);
 
       document.getElementById('editResultado').value = (typeof trade.r === 'number') ? trade.r : '';
       document.getElementById('editNotas').value = trade.notas || '';
@@ -2101,8 +2355,21 @@
 
       applyDayTypeToEditForm();
 
-      editMsg.textContent = '';
-      editMsg.className = 'msg';
+      // Si es un registro antiguo (plan si/no sin checklist), avisamos y
+      // abrimos el checklist para que Diego pueda completarlo si quiere.
+      const editPlanHeader = document.getElementById('editPlanHeader');
+      const editPlanBody = document.getElementById('editPlanBody');
+      if (isLegacyPlan(trade)) {
+        editPlanHeader.classList.add('open');
+        editPlanBody.classList.add('open');
+        editMsg.textContent = 'Registro antiguo: marcá los items del plan si querés convertirlo al nuevo formato.';
+        editMsg.className = 'msg';
+      } else {
+        editPlanHeader.classList.remove('open');
+        editPlanBody.classList.remove('open');
+        editMsg.textContent = '';
+        editMsg.className = 'msg';
+      }
 
       editModal.classList.add('open');
       document.body.style.overflow = 'hidden';
@@ -2146,6 +2413,9 @@
       const linkPre = pre.urls;
       const linkEnt = ent.urls;
 
+      // Items del plan marcados en el modal
+      const editPlanItems = getCheckedPlanItems('editPlan');
+
       let updatedData;
       if (tipoDia === 'observacion') {
         // Convertir a observación: borramos los campos de trade
@@ -2159,6 +2429,7 @@
           setup: null,
           duda: null,
           plan: null,
+          planItems: [],
           r: null,
           notas: document.getElementById('editNotas').value.trim(),
           queEliminaria: document.getElementById('editQueEliminaria').value.trim(),
@@ -2184,7 +2455,9 @@
           direccion: document.getElementById('editDireccion').value,
           setup: document.getElementById('editSetup').value,
           duda: document.querySelector('input[name="editDuda"]:checked').value,
-          plan: document.querySelector('input[name="editPlan"]:checked').value,
+          planItems: editPlanItems,
+          // Al guardar con checklist limpiamos el campo viejo plan si/no
+          plan: null,
           r: r,
           notas: document.getElementById('editNotas').value.trim(),
           queEliminaria: document.getElementById('editQueEliminaria').value.trim(),
@@ -2220,6 +2493,22 @@
       reviewToggle.classList.toggle('open');
       reviewContent.classList.toggle('open');
     });
+
+    // ===== Checklist del plan: construir y togglear =====
+    buildPlanChecklist('planBody', 'plan');
+    buildPlanChecklist('editPlanBody', 'editPlan');
+
+    function wirePlanToggle(headerId, bodyId) {
+      const header = document.getElementById(headerId);
+      const body = document.getElementById(bodyId);
+      if (!header || !body) return;
+      header.addEventListener('click', () => {
+        header.classList.toggle('open');
+        body.classList.toggle('open');
+      });
+    }
+    wirePlanToggle('planHeader', 'planBody');
+    wirePlanToggle('editPlanHeader', 'editPlanBody');
 
     // ===== Lógica de "Tipo de día" =====
     // Cuando el usuario elige "Solo observación", deshabilitamos los campos
@@ -2272,6 +2561,97 @@
     // Importante: registros viejos sin "tipoDia" se consideran trades por compatibilidad.
     function isTrade(t) {
       return t.tipoDia !== 'observacion';
+    }
+
+    // ===== Helpers del plan I.M.C =====
+    // Construye el HTML de los checkboxes dentro de un contenedor .plan-body.
+    // prefix distingue el form principal ('plan') del modal ('editPlan').
+    function buildPlanChecklist(bodyId, prefix) {
+      const body = document.getElementById(bodyId);
+      if (!body) return;
+      body.innerHTML = PLAN_IMC.map(fase => {
+        const items = fase.items.map(item => `
+          <label class="plan-item">
+            <input type="checkbox" data-plan-prefix="${prefix}" value="${item.id}">
+            <span class="plan-item-label">${escapeHtml(item.label)}</span>
+          </label>
+        `).join('');
+        return `
+          <div class="plan-phase">
+            <div class="plan-phase-title">${escapeHtml(fase.fase)}</div>
+            ${items}
+          </div>
+        `;
+      }).join('');
+
+      // Cada cambio actualiza el contador/barra del header correspondiente
+      body.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => updatePlanCounter(prefix));
+      });
+    }
+
+    // Lee qué ids están marcados en un form (por prefix)
+    function getCheckedPlanItems(prefix) {
+      const boxes = document.querySelectorAll(`input[data-plan-prefix="${prefix}"]:checked`);
+      return [...boxes].map(cb => cb.value);
+    }
+
+    // Marca los checkboxes segun un array de ids guardado
+    function setCheckedPlanItems(prefix, ids) {
+      const set = new Set(Array.isArray(ids) ? ids : []);
+      document.querySelectorAll(`input[data-plan-prefix="${prefix}"]`).forEach(cb => {
+        cb.checked = set.has(cb.value);
+      });
+      updatePlanCounter(prefix);
+    }
+
+    // Actualiza "N / 15" y la barra de progreso del header
+    function updatePlanCounter(prefix) {
+      const count = getCheckedPlanItems(prefix).length;
+      const countEl = document.getElementById(prefix === 'editPlan' ? 'editPlanCount' : 'planCount');
+      const barEl = document.getElementById(prefix === 'editPlan' ? 'editPlanBarFill' : 'planBarFill');
+      if (countEl) countEl.textContent = `${count} / ${PLAN_IMC_TOTAL}`;
+      if (barEl) barEl.style.width = `${Math.round((count / PLAN_IMC_TOTAL) * 100)}%`;
+    }
+
+    // Devuelve el % de adherencia de un registro (0-100) o null si no aplica.
+    // Registros nuevos: usan planItems (array de ids marcados).
+    // Registros viejos: tienen plan 'si'/'no' → los mapeamos a 100/0 para no perder la data.
+    function planAdherence(t) {
+      if (Array.isArray(t.planItems)) {
+        return Math.round((t.planItems.length / PLAN_IMC_TOTAL) * 100);
+      }
+      if (t.plan === 'si') return 100;
+      if (t.plan === 'no') return 0;
+      return null;
+    }
+
+    // ¿El registro usa el formato viejo (plan si/no) en lugar del checklist?
+    function isLegacyPlan(t) {
+      return !Array.isArray(t.planItems) && (t.plan === 'si' || t.plan === 'no');
+    }
+
+    // Genera la celda de plan para la tabla del historial
+    function planCellHtml(t) {
+      const adh = planAdherence(t);
+      if (adh === null) {
+        return '<div class="plan-cell"><span class="legacy">—</span></div>';
+      }
+      if (isLegacyPlan(t)) {
+        // Registro viejo: mostramos seguido/no seguido con nota
+        const txt = t.plan === 'si' ? 'Seguido' : 'No seguido';
+        return `<div class="plan-cell">
+          <span class="legacy">${txt}</span>
+          <div class="legacy-note">registro antiguo</div>
+        </div>`;
+      }
+      // Registro nuevo: % de adherencia con color según nivel
+      const cls = adh >= 80 ? 'high' : adh >= 50 ? 'mid' : 'low';
+      const n = (t.planItems || []).length;
+      return `<div class="plan-cell">
+        <span class="adh ${cls}">${adh}%</span>
+        <div class="adh-sub">${n}/${PLAN_IMC_TOTAL} items</div>
+      </div>`;
     }
 
     // ===== Helpers de links de gráficos =====
@@ -2523,10 +2903,19 @@
       const wrNoDuda = noDuda.length > 0 ? Math.round((noDuda.filter(t => t.r > 0).length / noDuda.length) * 100) : null;
       const wrSiDuda = siDuda.length > 0 ? Math.round((siDuda.filter(t => t.r > 0).length / siDuda.length) * 100) : null;
 
-      const noPlan = executed.filter(t => t.plan === 'no');
-      const siPlan = executed.filter(t => t.plan === 'si');
-      const wrNoPlan = noPlan.length > 0 ? Math.round((noPlan.filter(t => t.r > 0).length / noPlan.length) * 100) : null;
-      const wrSiPlan = siPlan.length > 0 ? Math.round((siPlan.filter(t => t.r > 0).length / siPlan.length) * 100) : null;
+      // Adherencia al plan I.M.C.
+      // Promedio de % sobre trades que tienen datos de plan (nuevos con checklist
+      // o viejos con si/no mapeados a 100/0). Cruzamos alta vs baja adherencia con winrate.
+      const conPlan = executed.filter(t => planAdherence(t) !== null);
+      const adherencias = conPlan.map(t => planAdherence(t));
+      const adhPromedio = adherencias.length > 0
+        ? Math.round(adherencias.reduce((s, v) => s + v, 0) / adherencias.length)
+        : null;
+      // Alta adherencia = 80%+ ; comparamos su winrate con el resto
+      const altaAdh = conPlan.filter(t => planAdherence(t) >= 80);
+      const bajaAdh = conPlan.filter(t => planAdherence(t) < 80);
+      const wrAltaAdh = altaAdh.length > 0 ? Math.round((altaAdh.filter(t => t.r > 0).length / altaAdh.length) * 100) : null;
+      const wrBajaAdh = bajaAdh.length > 0 ? Math.round((bajaAdh.filter(t => t.r > 0).length / bajaAdh.length) * 100) : null;
 
       // Expectancy y profit factor
       const expectancy = executed.length > 0 ? (neto / executed.length) : null;
@@ -2636,20 +3025,21 @@
       setText(7, COLOR_FADED);
       pdf.text(`CON DUDA · ${siDuda.length} trades`, col2X, y + 25);
 
-      // Col 3: Plan vs No plan
+      // Col 3: Adherencia al plan
       const col3X = marginX + (colW * 2);
       setText(8, COLOR_DIM);
-      pdf.text('SIGUIÓ PLAN  vs  NO', col3X, y);
+      pdf.text('ADHERENCIA AL PLAN', col3X, y);
 
-      setText(14, wrSiPlan !== null ? COLOR_TEXT : COLOR_FADED, 'bold');
-      pdf.text(`${wrSiPlan !== null ? wrSiPlan + '%' : '—'}`, col3X, y + 10);
+      setText(24, adhPromedio !== null ? COLOR_TEXT : COLOR_FADED, 'bold');
+      pdf.text(`${adhPromedio !== null ? adhPromedio + '%' : '—'}`, col3X, y + 10);
       setText(7, COLOR_FADED);
-      pdf.text(`SÍ PLAN · ${siPlan.length} trades`, col3X, y + 14);
+      pdf.text(`promedio · ${conPlan.length} trades`, col3X, y + 16);
 
-      setText(14, wrNoPlan !== null ? COLOR_TEXT : COLOR_FADED, 'bold');
-      pdf.text(`${wrNoPlan !== null ? wrNoPlan + '%' : '—'}`, col3X, y + 21);
-      setText(7, COLOR_FADED);
-      pdf.text(`NO PLAN · ${noPlan.length} trades`, col3X, y + 25);
+      setText(7, COLOR_DIM);
+      if (wrAltaAdh !== null || wrBajaAdh !== null) {
+        pdf.text(`WR ≥80% adh: ${wrAltaAdh !== null ? wrAltaAdh + '%' : '—'} (${altaAdh.length})`, col3X, y + 22);
+        pdf.text(`WR <80% adh: ${wrBajaAdh !== null ? wrBajaAdh + '%' : '—'} (${bajaAdh.length})`, col3X, y + 26);
+      }
 
       y = boxStartY + 32;
 
@@ -2793,15 +3183,41 @@
         if (!isObs) {
           setText(8, COLOR_DIM);
           const dudaTxt = t.duda === 'si' ? 'Hubo duda' : 'Sin duda';
-          const planTxt = t.plan === 'si' ? 'Siguió plan' : 'NO siguió plan';
 
           setText(8, t.duda === 'si' ? COLOR_LOSS : COLOR_DIM);
           pdf.text(dudaTxt, marginX, y);
 
-          setText(8, t.plan === 'no' ? COLOR_LOSS : COLOR_DIM);
-          pdf.text(planTxt, marginX + 32, y);
+          // Adherencia al plan
+          const adh = planAdherence(t);
+          if (adh !== null) {
+            const adhColor = adh >= 80 ? COLOR_WIN : adh >= 50 ? COLOR_ACCENT : COLOR_LOSS;
+            setText(8, adhColor);
+            if (isLegacyPlan(t)) {
+              pdf.text(t.plan === 'si' ? 'Plan: seguido (registro antiguo)' : 'Plan: no seguido (registro antiguo)', marginX + 32, y);
+            } else {
+              pdf.text(`Plan: ${adh}% (${(t.planItems || []).length}/${PLAN_IMC_TOTAL} items)`, marginX + 32, y);
+            }
+          }
 
           y += 6;
+
+          // Detalle de items marcados del plan (solo registros nuevos con items)
+          if (Array.isArray(t.planItems) && t.planItems.length > 0) {
+            const labels = t.planItems.map(id => PLAN_IMC_LABELS[id]).filter(Boolean);
+            if (labels.length > 0) {
+              setText(7, COLOR_FADED, 'bold');
+              pdf.text('PLAN CUMPLIDO', marginX, y);
+              y += 3.5;
+              setText(8, COLOR_DIM);
+              const planText = labels.join(' · ');
+              const planLines = pdf.splitTextToSize(planText, contentWidth - 4);
+              if (y + (planLines.length * 4) > pageHeight - marginBottom) {
+                addPageFooter(); pdf.addPage(); pageNum++; y = marginTop;
+              }
+              pdf.text(planLines, marginX + 2, y);
+              y += planLines.length * 4 + 3;
+            }
+          }
         } else {
           y += 1;
         }
@@ -3165,7 +3581,7 @@
           <td><span class="badge ${t.direccion}">${t.direccion === 'long' ? 'LONG' : 'SHORT'}</span></td>
           <td>${escapeHtml(t.setup)}</td>
           <td><span class="flag ${t.duda === 'si' ? 'warn' : 'ok'}">${t.duda === 'si' ? 'Sí' : 'No'}</span></td>
-          <td><span class="flag ${t.plan === 'no' ? 'warn' : 'ok'}">${t.plan === 'si' ? 'Sí' : 'No'}</span></td>
+          <td>${planCellHtml(t)}</td>
           <td class="r-value ${rClass}">${rSign}${t.r}R</td>
           <td>${reflexionHtml}</td>
           <td>${chartLinksHtml(t)}</td>
