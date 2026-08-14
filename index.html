@@ -525,6 +525,20 @@
       }
     }
 
+    /* Pre / Post mercado: dos columnas, separadas del resto */
+    .market-notes-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 800px) {
+      .market-notes-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     /* ===== Checklist del plan (I.M.C) ===== */
     .plan-checklist {
       grid-column: 1 / -1;
@@ -568,25 +582,30 @@
     .plan-header .ph-count {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      color: var(--accent);
+      color: var(--text-dim);
       letter-spacing: 0.05em;
     }
 
-    .plan-header .ph-bar {
-      width: 90px;
-      height: 4px;
-      background: var(--border);
-      position: relative;
-      overflow: hidden;
+    .plan-header .ph-verdict {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 3px 9px;
+      border: 1px solid;
       align-self: center;
     }
 
-    .plan-header .ph-bar-fill {
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      background: var(--accent);
-      width: 0%;
-      transition: width 0.25s;
+    .ph-verdict.ok {
+      color: var(--win);
+      border-color: var(--win);
+      background: rgba(127, 176, 105, 0.1);
+    }
+
+    .ph-verdict.bad {
+      color: var(--loss);
+      border-color: var(--loss);
+      background: rgba(201, 112, 100, 0.1);
     }
 
     .plan-header .ph-right {
@@ -613,10 +632,18 @@
     .plan-body.open { display: block; }
 
     .plan-phase {
-      margin-top: 18px;
+      margin-top: 22px;
     }
 
     .plan-phase:first-child { margin-top: 8px; }
+
+    /* El bloque de Confirmación se destaca: es el que decide */
+    .plan-phase.scored {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      padding: 14px 16px;
+      margin-top: 24px;
+    }
 
     .plan-phase-title {
       font-family: 'JetBrains Mono', monospace;
@@ -624,17 +651,49 @@
       letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--accent);
-      margin-bottom: 10px;
+      margin-bottom: 4px;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 10px;
     }
 
-    .plan-phase-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
+    .plan-phase-title .pt-name {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .plan-phase-title .phase-star {
+      color: var(--accent);
+      font-size: 11px;
+    }
+
+    .phase-verdict {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 2px 7px;
+      border: 1px solid;
+    }
+
+    .phase-verdict.ok {
+      color: var(--win);
+      border-color: var(--win);
+    }
+
+    .phase-verdict.bad {
+      color: var(--loss);
+      border-color: var(--loss);
+    }
+
+    .plan-phase-hint {
+      font-family: 'Manrope', sans-serif;
+      font-size: 11px;
+      font-style: italic;
+      color: var(--text-faded);
+      margin-bottom: 12px;
     }
 
     .plan-item {
@@ -1122,6 +1181,14 @@
 
     .reflection-item.repetir .r-tag {
       color: var(--win);
+    }
+
+    .reflection-item.premercado .r-tag {
+      color: var(--accent);
+    }
+
+    .reflection-item.postmercado .r-tag {
+      color: #6b9bd1;
     }
 
     .reflection-item .r-text {
@@ -1774,15 +1841,29 @@
       <div class="plan-checklist" id="field-plan">
         <button type="button" class="plan-header" id="planHeader">
           <div class="ph-left">
-            <span class="ph-title">Plan I.M.C · adherencia</span>
-            <span class="ph-count" id="planCount">0 / 15</span>
-            <span class="ph-bar"><span class="ph-bar-fill" id="planBarFill"></span></span>
+            <span class="ph-title">Plan I.M.C</span>
+            <span class="ph-count" id="planCount">Confirmación 0/5</span>
+            <span class="ph-verdict bad" id="planVerdict">NO VÁLIDO</span>
           </div>
           <div class="ph-right">
             <span class="chevron">›</span>
           </div>
         </button>
         <div class="plan-body" id="planBody"></div>
+      </div>
+
+      <div class="market-notes-grid">
+        <div class="field">
+          <label>Pre Mercado <span class="label-hint">plan y análisis antes de operar</span></label>
+          <textarea id="preMercado"
+            placeholder="¿Qué esperás del mercado hoy? Sesgo, niveles, escenarios que tenés en mente antes de entrar…"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Post Mercado <span class="label-hint">cierre y balance después de operar</span></label>
+          <textarea id="postMercado"
+            placeholder="¿Cómo cerró? ¿Se cumplió tu escenario? Balance de la sesión una vez terminada…"></textarea>
+        </div>
       </div>
 
       <div class="reflection-grid">
@@ -1957,15 +2038,27 @@
         <div class="plan-checklist" id="edit-field-plan">
           <button type="button" class="plan-header" id="editPlanHeader">
             <div class="ph-left">
-              <span class="ph-title">Plan I.M.C · adherencia</span>
-              <span class="ph-count" id="editPlanCount">0 / 15</span>
-              <span class="ph-bar"><span class="ph-bar-fill" id="editPlanBarFill"></span></span>
+              <span class="ph-title">Plan I.M.C</span>
+              <span class="ph-count" id="editPlanCount">Confirmación 0/5</span>
+              <span class="ph-verdict bad" id="editPlanVerdict">NO VÁLIDO</span>
             </div>
             <div class="ph-right">
               <span class="chevron">›</span>
             </div>
           </button>
           <div class="plan-body" id="editPlanBody"></div>
+        </div>
+
+        <div class="market-notes-grid">
+          <div class="field">
+            <label>Pre Mercado <span class="label-hint">plan y análisis antes de operar</span></label>
+            <textarea id="editPreMercado"></textarea>
+          </div>
+
+          <div class="field">
+            <label>Post Mercado <span class="label-hint">cierre y balance después de operar</span></label>
+            <textarea id="editPostMercado"></textarea>
+          </div>
         </div>
 
         <div class="reflection-grid">
@@ -2053,38 +2146,53 @@
     const DAYS = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
 
     // ===== Plan de trading I.M.C =====
+    // Estructura en 3 bloques con lógicas distintas:
+    //  - Contexto y Detonador: informativos, NO generan veredicto.
+    //  - Confirmación: es el único que decide. 4/5 o 5/5 = VÁLIDO.
     // Cada item tiene un id estable (NO cambiar los ids: son la clave con la que
     // se guardan en la base de datos). El texto sí se puede editar sin romper nada.
     const PLAN_IMC = [
-      { fase: 'Time Frame H1–H4', items: [
-        { id: 'niveles_pdh_pdl',        label: 'Marcar niveles clave: PDH / PDL' },
-        { id: 'niveles_pwh_pwl',        label: 'Marcar niveles clave: PWH / PWL' },
-        { id: 'niveles_sesiones',       label: 'Marcar niveles clave: Altos/Bajos de sesiones previas' },
-        { id: 'niveles_estructura',     label: 'Marcar niveles clave: Estructura clara' },
-        { id: 'zonas_ob_fvg_mechas',    label: 'Zonas de reversión y liquidez: OB, FVG, MECHAS' },
+      { key: 'contexto', fase: 'Contexto H1–H4', hint: '¿Tengo localizado el contexto?', scored: false, items: [
+        { id: 'niveles_pdh_pdl',        label: 'PDH / PDL marcado' },
+        { id: 'niveles_pwh_pwl',        label: 'PWH / PWL marcado' },
+        { id: 'niveles_sesiones',       label: 'Altos/bajos de sesiones' },
+        { id: 'niveles_estructura',     label: 'Estructura clara' },
+        { id: 'zonas_ob_fvg_mechas',    label: 'Zona de reversión/liquidez: OB / FVG / Mecha' },
       ]},
-      { fase: 'Detonador H1–H4', items: [
-        { id: 'barrio_nivel_mitigo',    label: 'Esperar que el precio barra un nivel clave y mitigue algo' },
-        { id: 'mitiga_fvg',             label: 'Mitiga / Rellena FVG' },
+      { key: 'detonador', fase: 'Detonador H1–H4', hint: 'Al menos una condición que active la atención', scored: false, items: [
+        { id: 'barrio_nivel_mitigo',    label: 'Precio barre nivel clave y mitiga algo' },
+        { id: 'mitiga_fvg',             label: 'Mitiga / rellena FVG' },
         { id: 'mitiga_ob',              label: 'Mitiga OB' },
         { id: 'mitiga_mecha',           label: 'Mitiga Mecha' },
-        { id: 'divergencia_dxy',        label: 'Adicional: Divergencia con DXY' },
+        { id: 'divergencia_dxy',        label: 'DXY como confluencia' },
       ]},
-      { fase: 'Confirmación M1–M2 (después de la mitigación)', items: [
-        { id: 'giro_3_velas',           label: 'Giro de 3 velas' },
-        { id: 'impulso',                label: 'Impulso' },
-        { id: 'choch',                  label: 'Choch' },
+      { key: 'confirmacion', fase: 'Confirmación M1–M3', hint: '4/5 o más = operación válida', scored: true, items: [
+        { id: 'choch',                  label: 'CHoCH' },
+        { id: 'impulso',                label: 'Impulso / Displacement' },
         { id: 'fvg_confirmacion',       label: 'FVG' },
-        { id: 'vela_gatillo_fvg',       label: 'Vela gatillo en el retorno al FVG' },
+        { id: 'retesteo',               label: 'Retesteo' },
+        { id: 'vela_gatillo',           label: 'Vela gatillo' },
       ]},
     ];
 
-    // Lista plana de todos los ids, para contar y calcular adherencia
-    const PLAN_IMC_IDS = PLAN_IMC.flatMap(f => f.items.map(i => i.id));
+    // Umbral de confirmaciones para considerar la operación válida
+    const CONFIRMACION_UMBRAL = 4;
+
+    // El bloque que puntúa (Confirmación)
+    const BLOQUE_SCORED = PLAN_IMC.find(b => b.scored);
+    const CONFIRMACION_IDS = BLOQUE_SCORED.items.map(i => i.id);
+    const CONFIRMACION_TOTAL = CONFIRMACION_IDS.length; // 5
+
+    // Lista plana de todos los ids (los 15), para construir y precargar
+    const PLAN_IMC_IDS = PLAN_IMC.flatMap(b => b.items.map(i => i.id));
     const PLAN_IMC_TOTAL = PLAN_IMC_IDS.length; // 15
     // Mapa id → label, para mostrar en historial/PDF
     const PLAN_IMC_LABELS = {};
-    PLAN_IMC.forEach(f => f.items.forEach(i => { PLAN_IMC_LABELS[i.id] = i.label; }));
+    PLAN_IMC.forEach(b => b.items.forEach(i => { PLAN_IMC_LABELS[i.id] = i.label; }));
+    // Mapa id → key de bloque, para saber a qué bloque pertenece cada id
+    const PLAN_IMC_BLOQUE = {};
+    PLAN_IMC.forEach(b => b.items.forEach(i => { PLAN_IMC_BLOQUE[i.id] = b.key; }));
+
 
     let currentUser = null;
     let trades = [];
@@ -2242,6 +2350,8 @@
           notas: document.getElementById('notas').value.trim(),
           queEliminaria: document.getElementById('queEliminaria').value.trim(),
           queRepitiria: document.getElementById('queRepitiria').value.trim(),
+          preMercado: document.getElementById('preMercado').value.trim(),
+          postMercado: document.getElementById('postMercado').value.trim(),
           linkPreOperacion: linkPre,
           linkEntrada: linkEnt,
           createdAt: serverTimestamp()
@@ -2265,6 +2375,8 @@
           notas: document.getElementById('notas').value.trim(),
           queEliminaria: document.getElementById('queEliminaria').value.trim(),
           queRepitiria: document.getElementById('queRepitiria').value.trim(),
+          preMercado: document.getElementById('preMercado').value.trim(),
+          postMercado: document.getElementById('postMercado').value.trim(),
           linkPreOperacion: linkPre,
           linkEntrada: linkEnt,
           createdAt: serverTimestamp()
@@ -2340,6 +2452,8 @@
       document.getElementById('editNotas').value = trade.notas || '';
       document.getElementById('editQueEliminaria').value = trade.queEliminaria || '';
       document.getElementById('editQueRepitiria').value = trade.queRepitiria || '';
+      document.getElementById('editPreMercado').value = trade.preMercado || '';
+      document.getElementById('editPostMercado').value = trade.postMercado || '';
       setLinkList('editLinkListPre', trade.linkPreOperacion);
       setLinkList('editLinkListEntrada', trade.linkEntrada);
 
@@ -2434,6 +2548,8 @@
           notas: document.getElementById('editNotas').value.trim(),
           queEliminaria: document.getElementById('editQueEliminaria').value.trim(),
           queRepitiria: document.getElementById('editQueRepitiria').value.trim(),
+          preMercado: document.getElementById('editPreMercado').value.trim(),
+          postMercado: document.getElementById('editPostMercado').value.trim(),
           linkPreOperacion: linkPre,
           linkEntrada: linkEnt,
           updatedAt: serverTimestamp()
@@ -2462,6 +2578,8 @@
           notas: document.getElementById('editNotas').value.trim(),
           queEliminaria: document.getElementById('editQueEliminaria').value.trim(),
           queRepitiria: document.getElementById('editQueRepitiria').value.trim(),
+          preMercado: document.getElementById('editPreMercado').value.trim(),
+          postMercado: document.getElementById('editPostMercado').value.trim(),
           linkPreOperacion: linkPre,
           linkEntrada: linkEnt,
           updatedAt: serverTimestamp()
@@ -2564,27 +2682,35 @@
     }
 
     // ===== Helpers del plan I.M.C =====
-    // Construye el HTML de los checkboxes dentro de un contenedor .plan-body.
+    // Construye el HTML de los 3 bloques dentro de un contenedor .plan-body.
     // prefix distingue el form principal ('plan') del modal ('editPlan').
     function buildPlanChecklist(bodyId, prefix) {
       const body = document.getElementById(bodyId);
       if (!body) return;
-      body.innerHTML = PLAN_IMC.map(fase => {
-        const items = fase.items.map(item => `
+      body.innerHTML = PLAN_IMC.map(bloque => {
+        const items = bloque.items.map(item => `
           <label class="plan-item">
-            <input type="checkbox" data-plan-prefix="${prefix}" value="${item.id}">
+            <input type="checkbox" data-plan-prefix="${prefix}" data-plan-bloque="${bloque.key}" value="${item.id}">
             <span class="plan-item-label">${escapeHtml(item.label)}</span>
           </label>
         `).join('');
+        const star = bloque.scored ? '<span class="phase-star">★</span>' : '';
+        const badge = bloque.scored
+          ? `<span class="phase-verdict" data-verdict-for="${prefix}"></span>`
+          : '';
         return `
-          <div class="plan-phase">
-            <div class="plan-phase-title">${escapeHtml(fase.fase)}</div>
+          <div class="plan-phase ${bloque.scored ? 'scored' : ''}">
+            <div class="plan-phase-title">
+              <span class="pt-name">${escapeHtml(bloque.fase)} ${star}</span>
+              ${badge}
+            </div>
+            <div class="plan-phase-hint">${escapeHtml(bloque.hint)}</div>
             ${items}
           </div>
         `;
       }).join('');
 
-      // Cada cambio actualiza el contador/barra del header correspondiente
+      // Cada cambio actualiza el contador/veredicto del header correspondiente
       body.querySelectorAll('input[type="checkbox"]').forEach(cb => {
         cb.addEventListener('change', () => updatePlanCounter(prefix));
       });
@@ -2605,24 +2731,51 @@
       updatePlanCounter(prefix);
     }
 
-    // Actualiza "N / 15" y la barra de progreso del header
-    function updatePlanCounter(prefix) {
-      const count = getCheckedPlanItems(prefix).length;
-      const countEl = document.getElementById(prefix === 'editPlan' ? 'editPlanCount' : 'planCount');
-      const barEl = document.getElementById(prefix === 'editPlan' ? 'editPlanBarFill' : 'planBarFill');
-      if (countEl) countEl.textContent = `${count} / ${PLAN_IMC_TOTAL}`;
-      if (barEl) barEl.style.width = `${Math.round((count / PLAN_IMC_TOTAL) * 100)}%`;
+    // Cuenta cuántos items de Confirmación están marcados en el form (por prefix)
+    function countConfirmacionChecked(prefix) {
+      const boxes = document.querySelectorAll(`input[data-plan-prefix="${prefix}"][data-plan-bloque="confirmacion"]:checked`);
+      return boxes.length;
     }
 
-    // Devuelve el % de adherencia de un registro (0-100) o null si no aplica.
-    // Registros nuevos: usan planItems (array de ids marcados).
-    // Registros viejos: tienen plan 'si'/'no' → los mapeamos a 100/0 para no perder la data.
-    function planAdherence(t) {
-      if (Array.isArray(t.planItems)) {
-        return Math.round((t.planItems.length / PLAN_IMC_TOTAL) * 100);
+    // Actualiza el header: muestra "Confirmación N/5 · VÁLIDO/NO VÁLIDO"
+    // y el badge de veredicto dentro del bloque Confirmación.
+    function updatePlanCounter(prefix) {
+      const conf = countConfirmacionChecked(prefix);
+      const valido = conf >= CONFIRMACION_UMBRAL;
+
+      const countEl = document.getElementById(prefix === 'editPlan' ? 'editPlanCount' : 'planCount');
+      const verdictEl = document.getElementById(prefix === 'editPlan' ? 'editPlanVerdict' : 'planVerdict');
+
+      if (countEl) countEl.textContent = `Confirmación ${conf}/${CONFIRMACION_TOTAL}`;
+      if (verdictEl) {
+        verdictEl.textContent = valido ? 'VÁLIDO' : 'NO VÁLIDO';
+        verdictEl.className = 'ph-verdict ' + (valido ? 'ok' : 'bad');
       }
-      if (t.plan === 'si') return 100;
-      if (t.plan === 'no') return 0;
+
+      // Badge dentro del bloque
+      const inlineBadge = document.querySelector(`[data-verdict-for="${prefix}"]`);
+      if (inlineBadge) {
+        inlineBadge.textContent = valido ? `${conf}/5 · VÁLIDO ✓` : `${conf}/5 · NO VÁLIDO`;
+        inlineBadge.className = 'phase-verdict ' + (valido ? 'ok' : 'bad');
+      }
+    }
+
+    // ===== Veredicto de un registro guardado =====
+    // Cuenta cuántos items de Confirmación tiene marcados un registro.
+    // Devuelve null si el registro no tiene datos de confirmación evaluables.
+    function confirmacionCount(t) {
+      if (Array.isArray(t.planItems)) {
+        return t.planItems.filter(id => CONFIRMACION_IDS.includes(id)).length;
+      }
+      return null;
+    }
+
+    // Veredicto: 'valido' | 'no_valido' | 'legacy' | null
+    function planVerdict(t) {
+      if (Array.isArray(t.planItems)) {
+        return confirmacionCount(t) >= CONFIRMACION_UMBRAL ? 'valido' : 'no_valido';
+      }
+      if (t.plan === 'si' || t.plan === 'no') return 'legacy';
       return null;
     }
 
@@ -2633,24 +2786,24 @@
 
     // Genera la celda de plan para la tabla del historial
     function planCellHtml(t) {
-      const adh = planAdherence(t);
-      if (adh === null) {
+      const v = planVerdict(t);
+      if (v === null) {
         return '<div class="plan-cell"><span class="legacy">—</span></div>';
       }
-      if (isLegacyPlan(t)) {
-        // Registro viejo: mostramos seguido/no seguido con nota
+      if (v === 'legacy') {
         const txt = t.plan === 'si' ? 'Seguido' : 'No seguido';
         return `<div class="plan-cell">
           <span class="legacy">${txt}</span>
           <div class="legacy-note">registro antiguo</div>
         </div>`;
       }
-      // Registro nuevo: % de adherencia con color según nivel
-      const cls = adh >= 80 ? 'high' : adh >= 50 ? 'mid' : 'low';
-      const n = (t.planItems || []).length;
+      // Registro nuevo: veredicto basado en Confirmación
+      const conf = confirmacionCount(t);
+      const cls = v === 'valido' ? 'high' : 'low';
+      const txt = v === 'valido' ? 'VÁLIDO' : 'NO VÁLIDO';
       return `<div class="plan-cell">
-        <span class="adh ${cls}">${adh}%</span>
-        <div class="adh-sub">${n}/${PLAN_IMC_TOTAL} items</div>
+        <span class="adh ${cls}">${txt}</span>
+        <div class="adh-sub">conf. ${conf}/${CONFIRMACION_TOTAL}</div>
       </div>`;
     }
 
@@ -2903,19 +3056,17 @@
       const wrNoDuda = noDuda.length > 0 ? Math.round((noDuda.filter(t => t.r > 0).length / noDuda.length) * 100) : null;
       const wrSiDuda = siDuda.length > 0 ? Math.round((siDuda.filter(t => t.r > 0).length / siDuda.length) * 100) : null;
 
-      // Adherencia al plan I.M.C.
-      // Promedio de % sobre trades que tienen datos de plan (nuevos con checklist
-      // o viejos con si/no mapeados a 100/0). Cruzamos alta vs baja adherencia con winrate.
-      const conPlan = executed.filter(t => planAdherence(t) !== null);
-      const adherencias = conPlan.map(t => planAdherence(t));
-      const adhPromedio = adherencias.length > 0
-        ? Math.round(adherencias.reduce((s, v) => s + v, 0) / adherencias.length)
-        : null;
-      // Alta adherencia = 80%+ ; comparamos su winrate con el resto
-      const altaAdh = conPlan.filter(t => planAdherence(t) >= 80);
-      const bajaAdh = conPlan.filter(t => planAdherence(t) < 80);
-      const wrAltaAdh = altaAdh.length > 0 ? Math.round((altaAdh.filter(t => t.r > 0).length / altaAdh.length) * 100) : null;
-      const wrBajaAdh = bajaAdh.length > 0 ? Math.round((bajaAdh.filter(t => t.r > 0).length / bajaAdh.length) * 100) : null;
+      // Veredicto del plan (basado en Confirmación).
+      // Cruzamos trades VÁLIDOS vs NO VÁLIDOS con su winrate, para ver si respetar
+      // la confirmación (4/5+) mejora resultados. Los registros antiguos (si/no) se excluyen.
+      const conVeredicto = executed.filter(t => {
+        const v = planVerdict(t);
+        return v === 'valido' || v === 'no_valido';
+      });
+      const validos = conVeredicto.filter(t => planVerdict(t) === 'valido');
+      const noValidos = conVeredicto.filter(t => planVerdict(t) === 'no_valido');
+      const wrValidos = validos.length > 0 ? Math.round((validos.filter(t => t.r > 0).length / validos.length) * 100) : null;
+      const wrNoValidos = noValidos.length > 0 ? Math.round((noValidos.filter(t => t.r > 0).length / noValidos.length) * 100) : null;
 
       // Expectancy y profit factor
       const expectancy = executed.length > 0 ? (neto / executed.length) : null;
@@ -3025,20 +3176,21 @@
       setText(7, COLOR_FADED);
       pdf.text(`CON DUDA · ${siDuda.length} trades`, col2X, y + 25);
 
-      // Col 3: Adherencia al plan
+      // Col 3: Veredicto del plan (Confirmación)
       const col3X = marginX + (colW * 2);
       setText(8, COLOR_DIM);
-      pdf.text('ADHERENCIA AL PLAN', col3X, y);
+      pdf.text('OPERACIONES VÁLIDAS', col3X, y);
 
-      setText(24, adhPromedio !== null ? COLOR_TEXT : COLOR_FADED, 'bold');
-      pdf.text(`${adhPromedio !== null ? adhPromedio + '%' : '—'}`, col3X, y + 10);
+      const totalVeredicto = conVeredicto.length;
+      setText(24, totalVeredicto > 0 ? COLOR_TEXT : COLOR_FADED, 'bold');
+      pdf.text(totalVeredicto > 0 ? `${validos.length}/${totalVeredicto}` : '—', col3X, y + 10);
       setText(7, COLOR_FADED);
-      pdf.text(`promedio · ${conPlan.length} trades`, col3X, y + 16);
+      pdf.text('confirmación 4/5+', col3X, y + 16);
 
       setText(7, COLOR_DIM);
-      if (wrAltaAdh !== null || wrBajaAdh !== null) {
-        pdf.text(`WR ≥80% adh: ${wrAltaAdh !== null ? wrAltaAdh + '%' : '—'} (${altaAdh.length})`, col3X, y + 22);
-        pdf.text(`WR <80% adh: ${wrBajaAdh !== null ? wrBajaAdh + '%' : '—'} (${bajaAdh.length})`, col3X, y + 26);
+      if (wrValidos !== null || wrNoValidos !== null) {
+        pdf.text(`WR válidas: ${wrValidos !== null ? wrValidos + '%' : '—'} (${validos.length})`, col3X, y + 22);
+        pdf.text(`WR no válidas: ${wrNoValidos !== null ? wrNoValidos + '%' : '—'} (${noValidos.length})`, col3X, y + 26);
       }
 
       y = boxStartY + 32;
@@ -3125,13 +3277,15 @@
       sorted.forEach((t, idx) => {
         const isObs = !isTrade(t);
         const rSign = t.r > 0 ? '+' : '';
+        const hasPre = t.preMercado && t.preMercado.trim();
+        const hasPost = t.postMercado && t.postMercado.trim();
         const hasNotas = t.notas && t.notas.trim();
         const hasElim = t.queEliminaria && t.queEliminaria.trim();
         const hasRep = t.queRepitiria && t.queRepitiria.trim();
 
         // Estimar líneas necesarias para reflexiones
         let estimatedHeight = 18;
-        [t.notas, t.queEliminaria, t.queRepitiria].forEach(text => {
+        [t.preMercado, t.postMercado, t.notas, t.queEliminaria, t.queRepitiria].forEach(text => {
           if (text && text.trim()) {
             const lines = pdf.splitTextToSize(text, contentWidth - 8);
             estimatedHeight += lines.length * 4 + 6;
@@ -3187,42 +3341,72 @@
           setText(8, t.duda === 'si' ? COLOR_LOSS : COLOR_DIM);
           pdf.text(dudaTxt, marginX, y);
 
-          // Adherencia al plan
-          const adh = planAdherence(t);
-          if (adh !== null) {
-            const adhColor = adh >= 80 ? COLOR_WIN : adh >= 50 ? COLOR_ACCENT : COLOR_LOSS;
-            setText(8, adhColor);
-            if (isLegacyPlan(t)) {
-              pdf.text(t.plan === 'si' ? 'Plan: seguido (registro antiguo)' : 'Plan: no seguido (registro antiguo)', marginX + 32, y);
-            } else {
-              pdf.text(`Plan: ${adh}% (${(t.planItems || []).length}/${PLAN_IMC_TOTAL} items)`, marginX + 32, y);
-            }
+          // Veredicto del plan (basado en Confirmación)
+          const veredicto = planVerdict(t);
+          if (veredicto === 'legacy') {
+            setText(8, COLOR_DIM);
+            pdf.text(t.plan === 'si' ? 'Plan: seguido (registro antiguo)' : 'Plan: no seguido (registro antiguo)', marginX + 32, y);
+          } else if (veredicto === 'valido' || veredicto === 'no_valido') {
+            const conf = confirmacionCount(t);
+            const esValido = veredicto === 'valido';
+            setText(8, esValido ? COLOR_WIN : COLOR_LOSS, 'bold');
+            pdf.text(`${esValido ? 'VÁLIDO' : 'NO VÁLIDO'} · confirmación ${conf}/${CONFIRMACION_TOTAL}`, marginX + 32, y);
           }
 
           y += 6;
 
-          // Detalle de items marcados del plan (solo registros nuevos con items)
+          // Detalle de items marcados, agrupados por bloque (solo registros nuevos)
           if (Array.isArray(t.planItems) && t.planItems.length > 0) {
-            const labels = t.planItems.map(id => PLAN_IMC_LABELS[id]).filter(Boolean);
-            if (labels.length > 0) {
+            PLAN_IMC.forEach(bloque => {
+              const marcados = bloque.items.filter(it => t.planItems.includes(it.id));
+              if (marcados.length === 0) return;
               setText(7, COLOR_FADED, 'bold');
-              pdf.text('PLAN CUMPLIDO', marginX, y);
+              const tituloBloque = bloque.scored
+                ? `${bloque.fase.toUpperCase()} (${marcados.length}/${bloque.items.length})`
+                : bloque.fase.toUpperCase();
+              if (y + 8 > pageHeight - marginBottom) { addPageFooter(); pdf.addPage(); pageNum++; y = marginTop; }
+              pdf.text(tituloBloque, marginX, y);
               y += 3.5;
               setText(8, COLOR_DIM);
-              const planText = labels.join(' · ');
-              const planLines = pdf.splitTextToSize(planText, contentWidth - 4);
-              if (y + (planLines.length * 4) > pageHeight - marginBottom) {
-                addPageFooter(); pdf.addPage(); pageNum++; y = marginTop;
-              }
-              pdf.text(planLines, marginX + 2, y);
-              y += planLines.length * 4 + 3;
-            }
+              const texto = marcados.map(it => it.label).join(' · ');
+              const lineas = pdf.splitTextToSize(texto, contentWidth - 4);
+              if (y + (lineas.length * 4) > pageHeight - marginBottom) { addPageFooter(); pdf.addPage(); pageNum++; y = marginTop; }
+              pdf.text(lineas, marginX + 2, y);
+              y += lineas.length * 4 + 2;
+            });
+            y += 1;
           }
         } else {
           y += 1;
         }
 
         // Reflexiones
+        if (hasPre) {
+          setText(7, COLOR_ACCENT, 'bold');
+          pdf.text('PRE MERCADO', marginX, y);
+          y += 3.5;
+          setText(9, COLOR_TEXT);
+          const lines = pdf.splitTextToSize(t.preMercado, contentWidth - 4);
+          if (y + (lines.length * 4) > pageHeight - marginBottom) {
+            addPageFooter(); pdf.addPage(); pageNum++; y = marginTop;
+          }
+          pdf.text(lines, marginX + 2, y);
+          y += lines.length * 4 + 3;
+        }
+
+        if (hasPost) {
+          setText(7, [107, 155, 209], 'bold');
+          pdf.text('POST MERCADO', marginX, y);
+          y += 3.5;
+          setText(9, COLOR_TEXT);
+          const lines = pdf.splitTextToSize(t.postMercado, contentWidth - 4);
+          if (y + (lines.length * 4) > pageHeight - marginBottom) {
+            addPageFooter(); pdf.addPage(); pageNum++; y = marginTop;
+          }
+          pdf.text(lines, marginX + 2, y);
+          y += lines.length * 4 + 3;
+        }
+
         if (hasNotas) {
           setText(7, COLOR_FADED, 'bold');
           pdf.text('NOTAS', marginX, y);
@@ -3272,7 +3456,7 @@
           y += lines.length * 4 + 3;
         }
 
-        if (!hasNotas && !hasElim && !hasRep) {
+        if (!hasPre && !hasPost && !hasNotas && !hasElim && !hasRep) {
           setText(8, COLOR_FADED, 'italic');
           pdf.text('— sin reflexiones registradas —', marginX, y);
           y += 4;
@@ -3539,12 +3723,17 @@
           const notasEsc = escapeHtml(t.notas);
           const elimEsc = escapeHtml(t.queEliminaria);
           const repEsc = escapeHtml(t.queRepitiria);
+          const preEsc = escapeHtml(t.preMercado);
+          const postEsc = escapeHtml(t.postMercado);
+          const sinNada = !notasEsc && !elimEsc && !repEsc && !preEsc && !postEsc;
           const reflexionHtml = `
         <div class="reflections">
+          ${preEsc ? `<div class="reflection-item premercado"><span class="r-tag">Pre mercado</span><span class="r-text">${preEsc}</span></div>` : ''}
+          ${postEsc ? `<div class="reflection-item postmercado"><span class="r-tag">Post mercado</span><span class="r-text">${postEsc}</span></div>` : ''}
           ${notasEsc ? `<div class="reflection-item notas"><span class="r-tag">Notas</span><span class="r-text">${notasEsc}</span></div>` : ''}
           ${elimEsc ? `<div class="reflection-item eliminar"><span class="r-tag">Eliminaría</span><span class="r-text">${elimEsc}</span></div>` : ''}
           ${repEsc ? `<div class="reflection-item repetir"><span class="r-tag">Repetiría</span><span class="r-text">${repEsc}</span></div>` : ''}
-          ${!notasEsc && !elimEsc && !repEsc ? '<span style="color: var(--text-faded)">—</span>' : ''}
+          ${sinNada ? '<span style="color: var(--text-faded)">—</span>' : ''}
         </div>
       `;
 
