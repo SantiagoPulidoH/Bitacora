@@ -696,6 +696,91 @@
       margin-bottom: 12px;
     }
 
+    /* Selector de tipo de confirmación (Classic / Rápida / IFVG) */
+    .conf-type-selector {
+      display: flex;
+      border: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+
+    .conf-type-selector input { display: none; }
+
+    .conf-type-selector label {
+      flex: 1;
+      text-align: center;
+      padding: 9px 8px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      transition: all 0.15s;
+      border-right: 1px solid var(--border);
+    }
+
+    .conf-type-selector label:last-of-type { border-right: none; }
+
+    .conf-type-selector input:checked + label {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    /* Paneles de cada tipo: solo el activo se muestra */
+    .conf-panel { display: none; }
+    .conf-panel.active { display: block; }
+
+    .conf-panel-rule {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-faded);
+      margin-bottom: 8px;
+    }
+
+    /* Preguntas Sí/No de Rápida e IFVG */
+    .yesno-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .yesno-row:last-child { border-bottom: none; }
+
+    .yesno-label {
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px;
+      line-height: 1.35;
+      color: var(--text-dim);
+      flex: 1;
+    }
+
+    .yesno-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .yesno-toggle input { display: none; }
+
+    .yesno-toggle label {
+      padding: 6px 14px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+      transition: all 0.15s;
+    }
+
+    .yesno-toggle label:first-of-type { border-right: 1px solid var(--border); }
+
+    .yesno-toggle input[value="si"]:checked + label { background: var(--win); color: var(--bg); }
+    .yesno-toggle input[value="no"]:checked + label { background: var(--loss); color: var(--bg); }
+
     .plan-item {
       display: flex;
       align-items: flex-start;
@@ -1842,7 +1927,7 @@
         <button type="button" class="plan-header" id="planHeader">
           <div class="ph-left">
             <span class="ph-title">Plan I.M.C</span>
-            <span class="ph-count" id="planCount">Confirmación 0/5</span>
+            <span class="ph-count" id="planCount">Classic 0/5</span>
             <span class="ph-verdict bad" id="planVerdict">NO VÁLIDO</span>
           </div>
           <div class="ph-right">
@@ -2039,7 +2124,7 @@
           <button type="button" class="plan-header" id="editPlanHeader">
             <div class="ph-left">
               <span class="ph-title">Plan I.M.C</span>
-              <span class="ph-count" id="editPlanCount">Confirmación 0/5</span>
+              <span class="ph-count" id="editPlanCount">Classic 0/5</span>
               <span class="ph-verdict bad" id="editPlanVerdict">NO VÁLIDO</span>
             </div>
             <div class="ph-right">
@@ -2151,6 +2236,7 @@
     //  - Confirmación: es el único que decide. 4/5 o 5/5 = VÁLIDO.
     // Cada item tiene un id estable (NO cambiar los ids: son la clave con la que
     // se guardan en la base de datos). El texto sí se puede editar sin romper nada.
+    // Contexto y Detonador: bloques informativos de checkboxes. NO deciden el veredicto.
     const PLAN_IMC = [
       { key: 'contexto', fase: 'Contexto H1–H4', hint: '¿Tengo localizado el contexto?', scored: false, items: [
         { id: 'niveles_pdh_pdl',        label: 'PDH / PDL marcado' },
@@ -2166,30 +2252,54 @@
         { id: 'mitiga_mecha',           label: 'Mitiga Mecha' },
         { id: 'divergencia_dxy',        label: 'DXY como confluencia' },
       ]},
-      { key: 'confirmacion', fase: 'Confirmación M1–M3', hint: '4/5 o más = operación válida', scored: true, items: [
-        { id: 'choch',                  label: 'CHoCH' },
-        { id: 'impulso',                label: 'Impulso / Displacement' },
-        { id: 'fvg_confirmacion',       label: 'FVG' },
-        { id: 'retesteo',               label: 'Retesteo' },
-        { id: 'vela_gatillo',           label: 'Vela gatillo' },
-      ]},
     ];
 
-    // Umbral de confirmaciones para considerar la operación válida
-    const CONFIRMACION_UMBRAL = 4;
+    // ===== Confirmación: 3 tipos ALTERNATIVOS. Diego elige UNO. =====
+    // Cada tipo tiene su propia regla de validez.
+    //  - classic: checklist de 5, válido con 4/5 o más.
+    //  - rapida / ifvg: 2 preguntas Sí/No, válido solo si AMBAS son Sí.
+    // Los ids son claves estables guardadas en la base de datos: NO cambiarlos.
+    const CONF_TYPES = [
+      { key: 'classic', label: 'Classic', kind: 'checklist', umbral: 4, items: [
+        { id: 'choch',            label: 'CHoCH' },
+        { id: 'impulso',          label: 'Impulso / Displacement' },
+        { id: 'fvg_confirmacion', label: 'FVG' },
+        { id: 'giro_3_velas',     label: 'Giro de 3 velas' },
+        { id: 'vela_gatillo',     label: 'Vela gatillo' },
+      ]},
+      { key: 'rapida', label: 'Rápida', kind: 'yesno', items: [
+        { id: 'rapida_nuevo_hl',  label: '¿Intenta hacer un nuevo high/low?' },
+        { id: 'rapida_rompio_hl', label: '¿Rompió el high/low inmediatamente anterior con cuerpo?' },
+      ]},
+      { key: 'ifvg', label: 'IFVG', kind: 'yesno', items: [
+        { id: 'ifvg_contrario',   label: '¿Creó un FVG contrario?' },
+        { id: 'ifvg_lleno',       label: '¿Llenó el FVG inmediatamente con la vela siguiente?' },
+      ]},
+    ];
+    const CONF_DEFAULT = 'classic';
+    const CONF_CLASSIC = CONF_TYPES.find(t => t.key === 'classic');
+    const CONF_CLASSIC_IDS = CONF_CLASSIC.items.map(i => i.id);
+    const CONF_CLASSIC_TOTAL = CONF_CLASSIC_IDS.length;   // 5
+    const CONF_CLASSIC_UMBRAL = CONF_CLASSIC.umbral;      // 4
 
-    // El bloque que puntúa (Confirmación)
-    const BLOQUE_SCORED = PLAN_IMC.find(b => b.scored);
-    const CONFIRMACION_IDS = BLOQUE_SCORED.items.map(i => i.id);
-    const CONFIRMACION_TOTAL = CONFIRMACION_IDS.length; // 5
+    // Mapa id → label y id → tipo, para mostrar en historial/PDF
+    const CONF_LABELS = {};
+    const CONF_ID_TYPE = {};
+    CONF_TYPES.forEach(ty => ty.items.forEach(i => { CONF_LABELS[i.id] = i.label; CONF_ID_TYPE[i.id] = ty.key; }));
+    const CONF_TYPE_LABEL = {};
+    CONF_TYPES.forEach(ty => { CONF_TYPE_LABEL[ty.key] = ty.label; });
 
-    // Lista plana de todos los ids (los 15), para construir y precargar
+    // Ids de las preguntas Sí/No (rapida + ifvg), para leer/guardar respuestas
+    const CONF_YESNO_IDS = CONF_TYPES.filter(t => t.kind === 'yesno').flatMap(t => t.items.map(i => i.id));
+
+    // Lista plana de ids de los bloques informativos (contexto + detonador)
     const PLAN_IMC_IDS = PLAN_IMC.flatMap(b => b.items.map(i => i.id));
-    const PLAN_IMC_TOTAL = PLAN_IMC_IDS.length; // 15
-    // Mapa id → label, para mostrar en historial/PDF
+    const PLAN_IMC_TOTAL = PLAN_IMC_IDS.length;
+    // Mapa id → label de contexto/detonador + classic (para el detalle del PDF)
     const PLAN_IMC_LABELS = {};
     PLAN_IMC.forEach(b => b.items.forEach(i => { PLAN_IMC_LABELS[i.id] = i.label; }));
-    // Mapa id → key de bloque, para saber a qué bloque pertenece cada id
+    CONF_CLASSIC.items.forEach(i => { PLAN_IMC_LABELS[i.id] = i.label; });
+    // Mapa id → key de bloque (contexto/detonador)
     const PLAN_IMC_BLOQUE = {};
     PLAN_IMC.forEach(b => b.items.forEach(i => { PLAN_IMC_BLOQUE[i.id] = b.key; }));
 
@@ -2334,8 +2444,10 @@
       const linkPre = pre.urls;
       const linkEnt = ent.urls;
 
-      // Items del plan I.M.C marcados
+      // Plan I.M.C: checkboxes informativos + tipo y respuestas de confirmación
       const planItems = getCheckedPlanItems('plan');
+      const confType = getConfType('plan');
+      const confAnswers = getConfAnswers('plan');
 
       // Construcción del trade según el tipo de día
       let trade;
@@ -2371,6 +2483,8 @@
           setup: document.getElementById('setup').value,
           duda: document.querySelector('input[name="duda"]:checked').value,
           planItems: planItems,
+          confType: confType,
+          confAnswers: confAnswers,
           r: r,
           notas: document.getElementById('notas').value.trim(),
           queEliminaria: document.getElementById('queEliminaria').value.trim(),
@@ -2398,8 +2512,10 @@
         // Limpiar las listas de links (reset() no elimina las filas agregadas)
         resetLinkList('linkListPre');
         resetLinkList('linkListEntrada');
-        // Desmarcar el checklist del plan y cerrarlo
+        // Desmarcar el checklist del plan, resetear confirmación y cerrarlo
         setCheckedPlanItems('plan', []);
+        setConfAnswers('plan', {});
+        setConfType('plan', CONF_DEFAULT);
         document.getElementById('planHeader').classList.remove('open');
         document.getElementById('planBody').classList.remove('open');
       } catch (err) {
@@ -2447,6 +2563,9 @@
       // Si es un registro viejo (plan si/no), el checklist arranca vacío
       // (no podemos saber qué items marcó) y se muestra un aviso.
       setCheckedPlanItems('editPlan', Array.isArray(trade.planItems) ? trade.planItems : []);
+      setConfType('editPlan', trade.confType || CONF_DEFAULT);
+      setConfAnswers('editPlan', trade.confAnswers || {});
+      updatePlanCounter('editPlan');
 
       document.getElementById('editResultado').value = (typeof trade.r === 'number') ? trade.r : '';
       document.getElementById('editNotas').value = trade.notas || '';
@@ -2527,8 +2646,10 @@
       const linkPre = pre.urls;
       const linkEnt = ent.urls;
 
-      // Items del plan marcados en el modal
+      // Plan del modal: checkboxes + tipo y respuestas de confirmación
       const editPlanItems = getCheckedPlanItems('editPlan');
+      const editConfType = getConfType('editPlan');
+      const editConfAnswers = getConfAnswers('editPlan');
 
       let updatedData;
       if (tipoDia === 'observacion') {
@@ -2544,6 +2665,8 @@
           duda: null,
           plan: null,
           planItems: [],
+          confType: null,
+          confAnswers: {},
           r: null,
           notas: document.getElementById('editNotas').value.trim(),
           queEliminaria: document.getElementById('editQueEliminaria').value.trim(),
@@ -2572,6 +2695,8 @@
           setup: document.getElementById('editSetup').value,
           duda: document.querySelector('input[name="editDuda"]:checked').value,
           planItems: editPlanItems,
+          confType: editConfType,
+          confAnswers: editConfAnswers,
           // Al guardar con checklist limpiamos el campo viejo plan si/no
           plan: null,
           r: r,
@@ -2682,98 +2807,216 @@
     }
 
     // ===== Helpers del plan I.M.C =====
-    // Construye el HTML de los 3 bloques dentro de un contenedor .plan-body.
+    // Construye el checklist: bloques informativos (Contexto, Detonador) como
+    // checkboxes, y el bloque Confirmación con selector de tipo (Classic/Rápida/IFVG).
     // prefix distingue el form principal ('plan') del modal ('editPlan').
     function buildPlanChecklist(bodyId, prefix) {
       const body = document.getElementById(bodyId);
       if (!body) return;
-      body.innerHTML = PLAN_IMC.map(bloque => {
+
+      // Bloques informativos (checkboxes)
+      const bloquesHtml = PLAN_IMC.map(bloque => {
         const items = bloque.items.map(item => `
           <label class="plan-item">
             <input type="checkbox" data-plan-prefix="${prefix}" data-plan-bloque="${bloque.key}" value="${item.id}">
             <span class="plan-item-label">${escapeHtml(item.label)}</span>
           </label>
         `).join('');
-        const star = bloque.scored ? '<span class="phase-star">★</span>' : '';
-        const badge = bloque.scored
-          ? `<span class="phase-verdict" data-verdict-for="${prefix}"></span>`
-          : '';
         return `
-          <div class="plan-phase ${bloque.scored ? 'scored' : ''}">
-            <div class="plan-phase-title">
-              <span class="pt-name">${escapeHtml(bloque.fase)} ${star}</span>
-              ${badge}
-            </div>
+          <div class="plan-phase">
+            <div class="plan-phase-title"><span class="pt-name">${escapeHtml(bloque.fase)}</span></div>
             <div class="plan-phase-hint">${escapeHtml(bloque.hint)}</div>
             ${items}
           </div>
         `;
       }).join('');
 
-      // Cada cambio actualiza el contador/veredicto del header correspondiente
+      // Selector de tipo de confirmación
+      const typeButtons = CONF_TYPES.map((ty, idx) => `
+        <input type="radio" name="${prefix}_confType" id="${prefix}_confType_${ty.key}" value="${ty.key}" ${idx === 0 ? 'checked' : ''}>
+        <label for="${prefix}_confType_${ty.key}">${escapeHtml(ty.label)}</label>
+      `).join('');
+
+      // Panel de cada tipo
+      const panelsHtml = CONF_TYPES.map(ty => {
+        let inner;
+        if (ty.kind === 'checklist') {
+          inner = ty.items.map(item => `
+            <label class="plan-item">
+              <input type="checkbox" data-plan-prefix="${prefix}" data-plan-bloque="confirmacion" value="${item.id}">
+              <span class="plan-item-label">${escapeHtml(item.label)}</span>
+            </label>
+          `).join('');
+        } else {
+          inner = ty.items.map(item => `
+            <div class="yesno-row">
+              <span class="yesno-label">${escapeHtml(item.label)}</span>
+              <div class="yesno-toggle">
+                <input type="radio" name="${prefix}_${item.id}" id="${prefix}_${item.id}_si" data-conf-yesno="${prefix}" value="si">
+                <label for="${prefix}_${item.id}_si">Sí</label>
+                <input type="radio" name="${prefix}_${item.id}" id="${prefix}_${item.id}_no" data-conf-yesno="${prefix}" value="no">
+                <label for="${prefix}_${item.id}_no">No</label>
+              </div>
+            </div>
+          `).join('');
+        }
+        const reglaTxt = ty.kind === 'checklist'
+          ? `${ty.umbral}/${ty.items.length} o más = válido`
+          : 'ambas respuestas en Sí = válido';
+        return `
+          <div class="conf-panel" data-conf-panel="${prefix}" data-conf-key="${ty.key}">
+            <div class="conf-panel-rule">${escapeHtml(reglaTxt)}</div>
+            ${inner}
+          </div>
+        `;
+      }).join('');
+
+      const confHtml = `
+        <div class="plan-phase scored">
+          <div class="plan-phase-title">
+            <span class="pt-name">Confirmación M1–M3 <span class="phase-star">★</span></span>
+            <span class="phase-verdict" data-verdict-for="${prefix}"></span>
+          </div>
+          <div class="plan-phase-hint">Elegí el tipo de confirmación de esta operación</div>
+          <div class="conf-type-selector">${typeButtons}</div>
+          ${panelsHtml}
+        </div>
+      `;
+
+      body.innerHTML = bloquesHtml + confHtml;
+
+      // Listeners: checkboxes (contexto/detonador/classic) y radios (tipo + sí/no)
       body.querySelectorAll('input[type="checkbox"]').forEach(cb => {
         cb.addEventListener('change', () => updatePlanCounter(prefix));
       });
+      body.querySelectorAll(`input[name="${prefix}_confType"]`).forEach(r => {
+        r.addEventListener('change', () => applyConfType(prefix));
+      });
+      body.querySelectorAll(`input[data-conf-yesno="${prefix}"]`).forEach(r => {
+        r.addEventListener('change', () => updatePlanCounter(prefix));
+      });
+
+      applyConfType(prefix);
     }
 
-    // Lee qué ids están marcados en un form (por prefix)
+    // Lee qué ids de checkbox están marcados (contexto + detonador + classic)
     function getCheckedPlanItems(prefix) {
-      const boxes = document.querySelectorAll(`input[data-plan-prefix="${prefix}"]:checked`);
+      const boxes = document.querySelectorAll(`input[type="checkbox"][data-plan-prefix="${prefix}"]:checked`);
       return [...boxes].map(cb => cb.value);
     }
 
     // Marca los checkboxes segun un array de ids guardado
     function setCheckedPlanItems(prefix, ids) {
       const set = new Set(Array.isArray(ids) ? ids : []);
-      document.querySelectorAll(`input[data-plan-prefix="${prefix}"]`).forEach(cb => {
+      document.querySelectorAll(`input[type="checkbox"][data-plan-prefix="${prefix}"]`).forEach(cb => {
         cb.checked = set.has(cb.value);
       });
       updatePlanCounter(prefix);
     }
 
-    // Cuenta cuántos items de Confirmación están marcados en el form (por prefix)
-    function countConfirmacionChecked(prefix) {
-      const boxes = document.querySelectorAll(`input[data-plan-prefix="${prefix}"][data-plan-bloque="confirmacion"]:checked`);
-      return boxes.length;
+    // Tipo de confirmación elegido en el form
+    function getConfType(prefix) {
+      const r = document.querySelector(`input[name="${prefix}_confType"]:checked`);
+      return r ? r.value : CONF_DEFAULT;
+    }
+    function setConfType(prefix, type) {
+      const t = (type && CONF_TYPES.some(c => c.key === type)) ? type : CONF_DEFAULT;
+      const r = document.getElementById(`${prefix}_confType_${t}`);
+      if (r) r.checked = true;
+      applyConfType(prefix);
     }
 
-    // Actualiza el header: muestra "Confirmación N/5 · VÁLIDO/NO VÁLIDO"
-    // y el badge de veredicto dentro del bloque Confirmación.
-    function updatePlanCounter(prefix) {
-      const conf = countConfirmacionChecked(prefix);
-      const valido = conf >= CONFIRMACION_UMBRAL;
+    // Respuestas Sí/No (rapida + ifvg) → { id: 'si'|'no'|'' }
+    function getConfAnswers(prefix) {
+      const out = {};
+      CONF_YESNO_IDS.forEach(id => {
+        const r = document.querySelector(`input[name="${prefix}_${id}"]:checked`);
+        out[id] = r ? r.value : '';
+      });
+      return out;
+    }
+    function setConfAnswers(prefix, answers) {
+      const a = answers || {};
+      CONF_YESNO_IDS.forEach(id => {
+        ['si', 'no'].forEach(v => {
+          const el = document.getElementById(`${prefix}_${id}_${v}`);
+          if (el) el.checked = (a[id] === v);
+        });
+      });
+    }
 
+    // Muestra solo el panel del tipo activo y recalcula veredicto
+    function applyConfType(prefix) {
+      const type = getConfType(prefix);
+      document.querySelectorAll(`[data-conf-panel="${prefix}"]`).forEach(panel => {
+        panel.classList.toggle('active', panel.dataset.confKey === type);
+      });
+      updatePlanCounter(prefix);
+    }
+
+    // Cuenta classic marcados en el form
+    function countClassicChecked(prefix) {
+      return document.querySelectorAll(`input[type="checkbox"][data-plan-prefix="${prefix}"][data-plan-bloque="confirmacion"]:checked`).length;
+    }
+
+    // Calcula el veredicto en vivo del form según el tipo activo
+    function formVerdict(prefix) {
+      const type = getConfType(prefix);
+      if (type === 'classic') {
+        const n = countClassicChecked(prefix);
+        return { valido: n >= CONF_CLASSIC_UMBRAL, detalle: `Classic ${n}/${CONF_CLASSIC_TOTAL}` };
+      }
+      const a = getConfAnswers(prefix);
+      const ty = CONF_TYPES.find(c => c.key === type);
+      const ids = ty.items.map(i => i.id);
+      const siCount = ids.filter(id => a[id] === 'si').length;
+      const valido = ids.every(id => a[id] === 'si');
+      return { valido, detalle: `${CONF_TYPE_LABEL[type]} ${siCount}/${ids.length}` };
+    }
+
+    // Actualiza header (contador + veredicto) y el badge inline del bloque
+    function updatePlanCounter(prefix) {
+      const { valido, detalle } = formVerdict(prefix);
       const countEl = document.getElementById(prefix === 'editPlan' ? 'editPlanCount' : 'planCount');
       const verdictEl = document.getElementById(prefix === 'editPlan' ? 'editPlanVerdict' : 'planVerdict');
 
-      if (countEl) countEl.textContent = `Confirmación ${conf}/${CONFIRMACION_TOTAL}`;
+      if (countEl) countEl.textContent = detalle;
       if (verdictEl) {
         verdictEl.textContent = valido ? 'VÁLIDO' : 'NO VÁLIDO';
         verdictEl.className = 'ph-verdict ' + (valido ? 'ok' : 'bad');
       }
-
-      // Badge dentro del bloque
       const inlineBadge = document.querySelector(`[data-verdict-for="${prefix}"]`);
       if (inlineBadge) {
-        inlineBadge.textContent = valido ? `${conf}/5 · VÁLIDO ✓` : `${conf}/5 · NO VÁLIDO`;
+        inlineBadge.textContent = valido ? `${detalle} · VÁLIDO ✓` : `${detalle} · NO VÁLIDO`;
         inlineBadge.className = 'phase-verdict ' + (valido ? 'ok' : 'bad');
       }
     }
 
     // ===== Veredicto de un registro guardado =====
-    // Cuenta cuántos items de Confirmación tiene marcados un registro.
-    // Devuelve null si el registro no tiene datos de confirmación evaluables.
+    // El tipo de confirmación de un registro (default classic por compatibilidad)
+    function tradeConfType(t) {
+      return (t.confType && CONF_TYPES.some(c => c.key === t.confType)) ? t.confType : CONF_DEFAULT;
+    }
+
+    // Cuántos items classic tiene marcados un registro
     function confirmacionCount(t) {
       if (Array.isArray(t.planItems)) {
-        return t.planItems.filter(id => CONFIRMACION_IDS.includes(id)).length;
+        return t.planItems.filter(id => CONF_CLASSIC_IDS.includes(id)).length;
       }
       return null;
     }
 
     // Veredicto: 'valido' | 'no_valido' | 'legacy' | null
     function planVerdict(t) {
-      if (Array.isArray(t.planItems)) {
-        return confirmacionCount(t) >= CONFIRMACION_UMBRAL ? 'valido' : 'no_valido';
+      // Registro nuevo: tiene planItems (array) o confType
+      if (Array.isArray(t.planItems) || t.confType) {
+        const type = tradeConfType(t);
+        if (type === 'classic') {
+          return (confirmacionCount(t) || 0) >= CONF_CLASSIC_UMBRAL ? 'valido' : 'no_valido';
+        }
+        const a = t.confAnswers || {};
+        const ty = CONF_TYPES.find(c => c.key === type);
+        return ty.items.every(i => a[i.id] === 'si') ? 'valido' : 'no_valido';
       }
       if (t.plan === 'si' || t.plan === 'no') return 'legacy';
       return null;
@@ -2781,7 +3024,19 @@
 
     // ¿El registro usa el formato viejo (plan si/no) en lugar del checklist?
     function isLegacyPlan(t) {
-      return !Array.isArray(t.planItems) && (t.plan === 'si' || t.plan === 'no');
+      return !Array.isArray(t.planItems) && !t.confType && (t.plan === 'si' || t.plan === 'no');
+    }
+
+    // Detalle corto del veredicto de un registro (para historial/PDF)
+    function tradeConfDetalle(t) {
+      const type = tradeConfType(t);
+      if (type === 'classic') {
+        return `Classic ${confirmacionCount(t) || 0}/${CONF_CLASSIC_TOTAL}`;
+      }
+      const a = t.confAnswers || {};
+      const ty = CONF_TYPES.find(c => c.key === type);
+      const si = ty.items.filter(i => a[i.id] === 'si').length;
+      return `${CONF_TYPE_LABEL[type]} ${si}/${ty.items.length}`;
     }
 
     // Genera la celda de plan para la tabla del historial
@@ -2797,13 +3052,11 @@
           <div class="legacy-note">registro antiguo</div>
         </div>`;
       }
-      // Registro nuevo: veredicto basado en Confirmación
-      const conf = confirmacionCount(t);
       const cls = v === 'valido' ? 'high' : 'low';
       const txt = v === 'valido' ? 'VÁLIDO' : 'NO VÁLIDO';
       return `<div class="plan-cell">
         <span class="adh ${cls}">${txt}</span>
-        <div class="adh-sub">conf. ${conf}/${CONFIRMACION_TOTAL}</div>
+        <div class="adh-sub">${escapeHtml(tradeConfDetalle(t))}</div>
       </div>`;
     }
 
@@ -3185,7 +3438,7 @@
       setText(24, totalVeredicto > 0 ? COLOR_TEXT : COLOR_FADED, 'bold');
       pdf.text(totalVeredicto > 0 ? `${validos.length}/${totalVeredicto}` : '—', col3X, y + 10);
       setText(7, COLOR_FADED);
-      pdf.text('confirmación 4/5+', col3X, y + 16);
+      pdf.text('confirmación válida', col3X, y + 16);
 
       setText(7, COLOR_DIM);
       if (wrValidos !== null || wrNoValidos !== null) {
@@ -3341,31 +3594,27 @@
           setText(8, t.duda === 'si' ? COLOR_LOSS : COLOR_DIM);
           pdf.text(dudaTxt, marginX, y);
 
-          // Veredicto del plan (basado en Confirmación)
+          // Veredicto del plan (basado en el tipo de confirmación)
           const veredicto = planVerdict(t);
           if (veredicto === 'legacy') {
             setText(8, COLOR_DIM);
             pdf.text(t.plan === 'si' ? 'Plan: seguido (registro antiguo)' : 'Plan: no seguido (registro antiguo)', marginX + 32, y);
           } else if (veredicto === 'valido' || veredicto === 'no_valido') {
-            const conf = confirmacionCount(t);
             const esValido = veredicto === 'valido';
             setText(8, esValido ? COLOR_WIN : COLOR_LOSS, 'bold');
-            pdf.text(`${esValido ? 'VÁLIDO' : 'NO VÁLIDO'} · confirmación ${conf}/${CONFIRMACION_TOTAL}`, marginX + 32, y);
+            pdf.text(`${esValido ? 'VÁLIDO' : 'NO VÁLIDO'} · ${tradeConfDetalle(t)}`, marginX + 32, y);
           }
 
           y += 6;
 
-          // Detalle de items marcados, agrupados por bloque (solo registros nuevos)
+          // Detalle de items informativos marcados (Contexto, Detonador)
           if (Array.isArray(t.planItems) && t.planItems.length > 0) {
             PLAN_IMC.forEach(bloque => {
               const marcados = bloque.items.filter(it => t.planItems.includes(it.id));
               if (marcados.length === 0) return;
               setText(7, COLOR_FADED, 'bold');
-              const tituloBloque = bloque.scored
-                ? `${bloque.fase.toUpperCase()} (${marcados.length}/${bloque.items.length})`
-                : bloque.fase.toUpperCase();
               if (y + 8 > pageHeight - marginBottom) { addPageFooter(); pdf.addPage(); pageNum++; y = marginTop; }
-              pdf.text(tituloBloque, marginX, y);
+              pdf.text(bloque.fase.toUpperCase(), marginX, y);
               y += 3.5;
               setText(8, COLOR_DIM);
               const texto = marcados.map(it => it.label).join(' · ');
@@ -3374,8 +3623,31 @@
               pdf.text(lineas, marginX + 2, y);
               y += lineas.length * 4 + 2;
             });
-            y += 1;
           }
+
+          // Detalle de la confirmación según el tipo usado
+          if (veredicto === 'valido' || veredicto === 'no_valido') {
+            const tipo = tradeConfType(t);
+            const ty = CONF_TYPES.find(c => c.key === tipo);
+            let detalleTxt = '';
+            if (tipo === 'classic') {
+              const marcados = ty.items.filter(it => (t.planItems || []).includes(it.id)).map(it => it.label);
+              detalleTxt = marcados.length ? marcados.join(' · ') : '(ningún item marcado)';
+            } else {
+              const a = t.confAnswers || {};
+              detalleTxt = ty.items.map(it => `${it.label} ${a[it.id] === 'si' ? 'Sí' : a[it.id] === 'no' ? 'No' : '—'}`).join('  ·  ');
+            }
+            setText(7, COLOR_FADED, 'bold');
+            if (y + 8 > pageHeight - marginBottom) { addPageFooter(); pdf.addPage(); pageNum++; y = marginTop; }
+            pdf.text(`CONFIRMACIÓN · ${ty.label.toUpperCase()}`, marginX, y);
+            y += 3.5;
+            setText(8, COLOR_DIM);
+            const lineas = pdf.splitTextToSize(detalleTxt, contentWidth - 4);
+            if (y + (lineas.length * 4) > pageHeight - marginBottom) { addPageFooter(); pdf.addPage(); pageNum++; y = marginTop; }
+            pdf.text(lineas, marginX + 2, y);
+            y += lineas.length * 4 + 2;
+          }
+          y += 1;
         } else {
           y += 1;
         }
