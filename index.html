@@ -342,6 +342,90 @@
       letter-spacing: 0;
     }
 
+    /* Header de métricas con filtro de activo */
+    .metrics-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .asset-filter {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .asset-filter label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .asset-filter select {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 8px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      outline: none;
+      cursor: pointer;
+      color-scheme: dark;
+    }
+
+    .asset-filter select:focus { border-color: var(--accent); }
+
+    /* Estadísticas de resultados (R) */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 56px;
+    }
+
+    @media (max-width: 800px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .stat-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 16px;
+    }
+
+    .stat-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 500;
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+
+    .stat-value.pos { color: var(--win); }
+    .stat-value.neg { color: var(--loss); }
+
+    .stat-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--text-faded);
+      letter-spacing: 0.06em;
+    }
+
     /* Metrics */
     .metrics {
       display: grid;
@@ -695,6 +779,70 @@
       color: var(--text-faded);
       margin-bottom: 12px;
     }
+
+    /* Selector de tipo de plan (I.M.C / Continuación) */
+    .plan-type-selector {
+      display: flex;
+      border: 1px solid var(--accent);
+      margin-bottom: 18px;
+    }
+
+    .plan-type-selector input { display: none; }
+
+    .plan-type-selector label {
+      flex: 1;
+      text-align: center;
+      padding: 11px 8px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      transition: all 0.15s;
+      border-right: 1px solid var(--accent);
+    }
+
+    .plan-type-selector label:last-of-type { border-right: none; }
+
+    .plan-type-selector input:checked + label {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .plan-mode-panel { display: none; }
+    .plan-mode-panel.active { display: block; }
+
+    .cont-field {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 14px;
+    }
+
+    .cont-field label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 7px;
+    }
+
+    .cont-field textarea {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 12px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px;
+      line-height: 1.4;
+      outline: none;
+      resize: vertical;
+      min-height: 44px;
+      color-scheme: dark;
+    }
+
+    .cont-field textarea:focus { border-color: var(--accent); }
 
     /* Selector de tipo de confirmación (Classic / Rápida / IFVG) */
     .conf-type-selector {
@@ -1803,7 +1951,7 @@
     <header class="header">
       <div>
         <h1>Bitácora</h1>
-        <div class="subtitle">trading behavior log · <em>v0.5</em></div>
+        <div class="subtitle">trading behavior log · <em>v12</em></div>
       </div>
       <div class="header-right">
         <div class="user-info">
@@ -1814,7 +1962,13 @@
       </div>
     </header>
 
-    <div class="section-label">Métricas</div>
+    <div class="metrics-header">
+      <div class="section-label" style="margin:0;">Métricas</div>
+      <div class="asset-filter">
+        <label for="assetFilter">Activo</label>
+        <select id="assetFilter"><option value="">Todos los activos</option></select>
+      </div>
+    </div>
     <div class="metrics">
       <div class="metric">
         <div class="metric-label">Winrate total</div>
@@ -1861,6 +2015,50 @@
         <div class="metric-label">Días de observación</div>
         <div class="metric-value" id="obsCount">—</div>
         <div class="metric-sub" id="obsSub">sin trades ejecutados</div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top: 8px;">Estadísticas de resultados <span class="label-hint" style="text-transform:none; letter-spacing:0;">en múltiplos de R</span></div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">Ganadores / Perdedores</div>
+        <div class="stat-value" id="stWinLoss">—</div>
+        <div class="stat-sub" id="stWinLossSub">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Win promedio</div>
+        <div class="stat-value pos" id="stAvgWin">—</div>
+        <div class="stat-sub">R por trade ganador</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Loss promedio</div>
+        <div class="stat-value neg" id="stAvgLoss">—</div>
+        <div class="stat-sub">R por trade perdedor</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Mejor win</div>
+        <div class="stat-value pos" id="stBestWin">—</div>
+        <div class="stat-sub">R máximo</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Peor loss</div>
+        <div class="stat-value neg" id="stWorstLoss">—</div>
+        <div class="stat-sub">R mínimo</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Racha ganadora</div>
+        <div class="stat-value" id="stWinStreak">—</div>
+        <div class="stat-sub" id="stWinStreakSub">máx · promedio</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Racha perdedora</div>
+        <div class="stat-value" id="stLossStreak">—</div>
+        <div class="stat-sub" id="stLossStreakSub">máx · promedio</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Sharpe (sobre R)</div>
+        <div class="stat-value" id="stSharpe">—</div>
+        <div class="stat-sub" id="stSharpeSub">consistencia</div>
       </div>
     </div>
 
@@ -2048,7 +2246,7 @@
     </div>
 
     <footer class="footer">
-      <span>Bitácora v0.6 · Firestore</span>
+      <span>Bitácora v12 · Firestore</span>
       <span id="storageInfo">0 trades</span>
     </footer>
   </div>
@@ -2303,11 +2501,29 @@
     const PLAN_IMC_BLOQUE = {};
     PLAN_IMC.forEach(b => b.items.forEach(i => { PLAN_IMC_BLOQUE[i.id] = b.key; }));
 
+    // ===== Tipo de plan: I.M.C vs Continuación =====
+    // Ambos comparten el bloque Confirmación (Classic/Rápida/IFVG) y el veredicto.
+    // Cambian solo los pasos de arriba: IMC = Contexto+Detonador (checkboxes);
+    // Continuación = Dirección/FVG/Objetivo (texto libre que escribe Diego).
+    const PLAN_TIPOS = [
+      { key: 'imc',          label: 'Plan I.M.C' },
+      { key: 'continuacion', label: 'Continuación' },
+    ];
+    const PLAN_TIPO_DEFAULT = 'imc';
+    const PLAN_TIPO_LABEL = {}; PLAN_TIPOS.forEach(p => { PLAN_TIPO_LABEL[p.key] = p.label; });
+    const CONTINUACION_FIELDS = [
+      { id: 'direccion', label: 'Paso 1 · Dirección', ph: 'Sesgo direccional de la continuación…' },
+      { id: 'fvg',       label: 'Paso 2 · FVG',       ph: 'El FVG que vas a usar…' },
+      { id: 'objetivo',  label: 'Paso 3 · Objetivo',  ph: 'A dónde apuntás / objetivo del movimiento…' },
+    ];
+    const CONTINUACION_IDS = CONTINUACION_FIELDS.map(f => f.id);
+
 
     let currentUser = null;
     let trades = [];
     let unsubscribeTrades = null;
     let editingTradeId = null;
+    let assetFilter = ''; // '' = todos los activos; si no, filtra por par
 
     const initialLoader = document.getElementById('initialLoader');
     const loginScreen = document.getElementById('loginScreen');
@@ -2444,10 +2660,12 @@
       const linkPre = pre.urls;
       const linkEnt = ent.urls;
 
-      // Plan I.M.C: checkboxes informativos + tipo y respuestas de confirmación
+      // Plan: tipo (imc/continuación), checkboxes informativos, confirmación y campos continuación
       const planItems = getCheckedPlanItems('plan');
       const confType = getConfType('plan');
       const confAnswers = getConfAnswers('plan');
+      const planTipo = getPlanTipo('plan');
+      const continuacionData = getContinuacionData('plan');
 
       // Construcción del trade según el tipo de día
       let trade;
@@ -2482,6 +2700,8 @@
           direccion: document.getElementById('direccion').value,
           setup: document.getElementById('setup').value,
           duda: document.querySelector('input[name="duda"]:checked').value,
+          planTipo: planTipo,
+          continuacionData: continuacionData,
           planItems: planItems,
           confType: confType,
           confAnswers: confAnswers,
@@ -2512,10 +2732,12 @@
         // Limpiar las listas de links (reset() no elimina las filas agregadas)
         resetLinkList('linkListPre');
         resetLinkList('linkListEntrada');
-        // Desmarcar el checklist del plan, resetear confirmación y cerrarlo
+        // Desmarcar el checklist del plan, resetear confirmación/continuación y cerrarlo
         setCheckedPlanItems('plan', []);
         setConfAnswers('plan', {});
         setConfType('plan', CONF_DEFAULT);
+        setContinuacionData('plan', {});
+        setPlanTipo('plan', PLAN_TIPO_DEFAULT);
         document.getElementById('planHeader').classList.remove('open');
         document.getElementById('planBody').classList.remove('open');
       } catch (err) {
@@ -2565,6 +2787,8 @@
       setCheckedPlanItems('editPlan', Array.isArray(trade.planItems) ? trade.planItems : []);
       setConfType('editPlan', trade.confType || CONF_DEFAULT);
       setConfAnswers('editPlan', trade.confAnswers || {});
+      setPlanTipo('editPlan', trade.planTipo || PLAN_TIPO_DEFAULT);
+      setContinuacionData('editPlan', trade.continuacionData || {});
       updatePlanCounter('editPlan');
 
       document.getElementById('editResultado').value = (typeof trade.r === 'number') ? trade.r : '';
@@ -2646,10 +2870,12 @@
       const linkPre = pre.urls;
       const linkEnt = ent.urls;
 
-      // Plan del modal: checkboxes + tipo y respuestas de confirmación
+      // Plan del modal: tipo, checkboxes, confirmación y continuación
       const editPlanItems = getCheckedPlanItems('editPlan');
       const editConfType = getConfType('editPlan');
       const editConfAnswers = getConfAnswers('editPlan');
+      const editPlanTipo = getPlanTipo('editPlan');
+      const editContinuacionData = getContinuacionData('editPlan');
 
       let updatedData;
       if (tipoDia === 'observacion') {
@@ -2667,6 +2893,8 @@
           planItems: [],
           confType: null,
           confAnswers: {},
+          planTipo: null,
+          continuacionData: {},
           r: null,
           notas: document.getElementById('editNotas').value.trim(),
           queEliminaria: document.getElementById('editQueEliminaria').value.trim(),
@@ -2694,6 +2922,8 @@
           direccion: document.getElementById('editDireccion').value,
           setup: document.getElementById('editSetup').value,
           duda: document.querySelector('input[name="editDuda"]:checked').value,
+          planTipo: editPlanTipo,
+          continuacionData: editContinuacionData,
           planItems: editPlanItems,
           confType: editConfType,
           confAnswers: editConfAnswers,
@@ -2883,7 +3113,31 @@
         </div>
       `;
 
-      body.innerHTML = bloquesHtml + confHtml;
+      // Selector de tipo de plan (IMC / Continuación)
+      const planTipoButtons = PLAN_TIPOS.map((p, idx) => `
+        <input type="radio" name="${prefix}_planTipo" id="${prefix}_planTipo_${p.key}" value="${p.key}" ${idx === 0 ? 'checked' : ''}>
+        <label for="${prefix}_planTipo_${p.key}">${escapeHtml(p.label)}</label>
+      `).join('');
+
+      // Panel Continuación: campos de texto libre
+      const continuacionInner = CONTINUACION_FIELDS.map(f => `
+        <div class="cont-field">
+          <label for="${prefix}_cont_${f.id}">${escapeHtml(f.label)}</label>
+          <textarea id="${prefix}_cont_${f.id}" data-cont-field="${prefix}" rows="2" placeholder="${escapeHtml(f.ph)}"></textarea>
+        </div>
+      `).join('');
+
+      const planModeHtml = `
+        <div class="plan-type-selector">${planTipoButtons}</div>
+        <div class="plan-mode-panel" data-plan-mode-panel="${prefix}" data-plan-mode="imc">
+          ${bloquesHtml}
+        </div>
+        <div class="plan-mode-panel" data-plan-mode-panel="${prefix}" data-plan-mode="continuacion">
+          ${continuacionInner}
+        </div>
+      `;
+
+      body.innerHTML = planModeHtml + confHtml;
 
       // Listeners: checkboxes (contexto/detonador/classic) y radios (tipo + sí/no)
       body.querySelectorAll('input[type="checkbox"]').forEach(cb => {
@@ -2895,8 +3149,47 @@
       body.querySelectorAll(`input[data-conf-yesno="${prefix}"]`).forEach(r => {
         r.addEventListener('change', () => updatePlanCounter(prefix));
       });
+      body.querySelectorAll(`input[name="${prefix}_planTipo"]`).forEach(r => {
+        r.addEventListener('change', () => applyPlanTipo(prefix));
+      });
 
       applyConfType(prefix);
+      applyPlanTipo(prefix);
+    }
+
+    // Tipo de plan elegido en el form
+    function getPlanTipo(prefix) {
+      const r = document.querySelector(`input[name="${prefix}_planTipo"]:checked`);
+      return r ? r.value : PLAN_TIPO_DEFAULT;
+    }
+    function setPlanTipo(prefix, tipo) {
+      const t = (tipo && PLAN_TIPOS.some(p => p.key === tipo)) ? tipo : PLAN_TIPO_DEFAULT;
+      const r = document.getElementById(`${prefix}_planTipo_${t}`);
+      if (r) r.checked = true;
+      applyPlanTipo(prefix);
+    }
+    // Muestra el panel del tipo de plan activo (imc / continuacion)
+    function applyPlanTipo(prefix) {
+      const tipo = getPlanTipo(prefix);
+      document.querySelectorAll(`[data-plan-mode-panel="${prefix}"]`).forEach(panel => {
+        panel.classList.toggle('active', panel.dataset.planMode === tipo);
+      });
+    }
+    // Lee los campos de texto de Continuación → { direccion, fvg, objetivo }
+    function getContinuacionData(prefix) {
+      const out = {};
+      CONTINUACION_IDS.forEach(id => {
+        const el = document.getElementById(`${prefix}_cont_${id}`);
+        out[id] = el ? el.value.trim() : '';
+      });
+      return out;
+    }
+    function setContinuacionData(prefix, data) {
+      const d = data || {};
+      CONTINUACION_IDS.forEach(id => {
+        const el = document.getElementById(`${prefix}_cont_${id}`);
+        if (el) el.value = d[id] || '';
+      });
     }
 
     // Lee qué ids de checkbox están marcados (contexto + detonador + classic)
@@ -3289,14 +3582,17 @@
       const COLOR_LOSS = [180, 60, 60];
       const COLOR_BORDER = [200, 200, 200];
 
+      // El PDF respeta el filtro por activo activo en el dashboard
+      const pdfTrades = assetFilter ? trades.filter(t => (t.par || '') === assetFilter) : trades;
+
       // Sort registros (más recientes primero)
-      const sorted = [...trades].sort((a, b) =>
+      const sorted = [...pdfTrades].sort((a, b) =>
         (b.fecha + 'T' + (b.hora || '00:00')).localeCompare(a.fecha + 'T' + (a.hora || '00:00'))
       );
 
       // Separar trades ejecutados de observaciones
-      const executed = trades.filter(isTrade);
-      const observations = trades.filter(t => !isTrade(t));
+      const executed = pdfTrades.filter(isTrade);
+      const observations = pdfTrades.filter(t => !isTrade(t));
 
       // Cálculos sobre trades ejecutados
       const wins = executed.filter(t => t.r > 0).length;
@@ -3392,7 +3688,13 @@
         ? `Periodo: ${fechaMin} → ${fechaMax}   ·   ${executed.length} ${executed.length === 1 ? 'trade ejecutado' : 'trades ejecutados'} · ${observations.length} ${observations.length === 1 ? 'día de observación' : 'días de observación'}`
         : `Periodo: ${fechaMin} → ${fechaMax}   ·   Total: ${executed.length} ${executed.length === 1 ? 'trade' : 'trades'}`;
       pdf.text(resumenLinea, marginX, y);
-      y += 10;
+      y += 5;
+      if (assetFilter) {
+        setText(9, COLOR_ACCENT, 'bold');
+        pdf.text(`Filtrado por activo: ${assetFilter}`, marginX, y);
+        y += 5;
+      }
+      y += 5;
 
       // ============= MÉTRICAS =============
       setText(8, COLOR_DIM, 'bold');
@@ -3519,6 +3821,38 @@
       }
       y += 12;
 
+      // ============= ESTADÍSTICAS SOBRE R =============
+      {
+        const winsArr = executed.filter(t => t.r > 0);
+        const lossArr = executed.filter(t => t.r < 0);
+        const avgW = winsArr.length ? winsArr.reduce((s, t) => s + t.r, 0) / winsArr.length : null;
+        const avgL = lossArr.length ? lossArr.reduce((s, t) => s + t.r, 0) / lossArr.length : null;
+        const bestW = winsArr.length ? Math.max(...winsArr.map(t => t.r)) : null;
+        const worstL = lossArr.length ? Math.min(...lossArr.map(t => t.r)) : null;
+        // Rachas cronológicas
+        const chrono = [...executed].sort((a, b) =>
+          (a.fecha + 'T' + (a.hora || '00:00')).localeCompare(b.fecha + 'T' + (b.hora || '00:00')));
+        const ws = [], ls = []; let cw = 0, cl = 0;
+        chrono.forEach(t => {
+          if (t.r > 0) { cw++; if (cl > 0) { ls.push(cl); cl = 0; } }
+          else if (t.r < 0) { cl++; if (cw > 0) { ws.push(cw); cw = 0; } }
+        });
+        if (cw > 0) ws.push(cw); if (cl > 0) ls.push(cl);
+        const maxOr = a => a.length ? Math.max(...a) : 0;
+
+        ensureSpace(22);
+        setText(8, COLOR_DIM, 'bold');
+        pdf.text('ESTADÍSTICAS SOBRE R', marginX, y);
+        y += 5;
+        drawHorizontalLine(y);
+        y += 6;
+        setText(8, COLOR_DIM);
+        const l1 = `Ganadores/Perdedores: ${winsArr.length}/${lossArr.length}   ·   Win prom: ${avgW === null ? '—' : '+' + avgW.toFixed(2) + 'R'}   ·   Loss prom: ${avgL === null ? '—' : avgL.toFixed(2) + 'R'}`;
+        const l2 = `Mejor win: ${bestW === null ? '—' : '+' + bestW.toFixed(1) + 'R'}   ·   Peor loss: ${worstL === null ? '—' : worstL.toFixed(1) + 'R'}   ·   Racha máx G/P: ${maxOr(ws)}/${maxOr(ls)}`;
+        pdf.text(l1, marginX, y); y += 5;
+        pdf.text(l2, marginX, y); y += 10;
+      }
+
       // ============= HISTORIAL DE TRADES =============
       ensureSpace(20);
       setText(8, COLOR_DIM, 'bold');
@@ -3607,8 +3941,29 @@
 
           y += 6;
 
-          // Detalle de items informativos marcados (Contexto, Detonador)
-          if (Array.isArray(t.planItems) && t.planItems.length > 0) {
+          // Tipo de plan + pasos de arriba (IMC: Contexto/Detonador · Continuación: texto)
+          const planTipo = (t.planTipo === 'continuacion') ? 'continuacion' : 'imc';
+          setText(7, COLOR_ACCENT, 'bold');
+          if (y + 8 > pageHeight - marginBottom) { addPageFooter(); pdf.addPage(); pageNum++; y = marginTop; }
+          pdf.text(`PLAN: ${(PLAN_TIPO_LABEL[planTipo] || 'Plan I.M.C').toUpperCase()}`, marginX, y);
+          y += 4;
+
+          if (planTipo === 'continuacion') {
+            const cd = t.continuacionData || {};
+            CONTINUACION_FIELDS.forEach(f => {
+              const val = (cd[f.id] || '').trim();
+              if (!val) return;
+              setText(7, COLOR_FADED, 'bold');
+              if (y + 8 > pageHeight - marginBottom) { addPageFooter(); pdf.addPage(); pageNum++; y = marginTop; }
+              pdf.text(f.label.toUpperCase(), marginX, y);
+              y += 3.5;
+              setText(8, COLOR_DIM);
+              const lineas = pdf.splitTextToSize(val, contentWidth - 4);
+              if (y + (lineas.length * 4) > pageHeight - marginBottom) { addPageFooter(); pdf.addPage(); pageNum++; y = marginTop; }
+              pdf.text(lineas, marginX + 2, y);
+              y += lineas.length * 4 + 2;
+            });
+          } else if (Array.isArray(t.planItems) && t.planItems.length > 0) {
             PLAN_IMC.forEach(bloque => {
               const marcados = bloque.items.filter(it => t.planItems.includes(it.id));
               if (marcados.length === 0) return;
@@ -3857,18 +4212,24 @@
       addPageFooter();
 
       // Guardar
-      const filename = `bitacora_${fechaMin}_a_${fechaMax}.pdf`;
+      const filename = `bitacora_${assetFilter ? assetFilter + '_' : ''}${fechaMin}_a_${fechaMax}.pdf`;
       pdf.save(filename);
     }
 
     // ===== Render =====
     function render() {
-      document.getElementById('tradeCount').textContent = trades.length;
-      btnExportPdf.disabled = trades.length === 0;
+      // Reconstruir el selector de activos con los pares que existen (sobre TODOS los trades)
+      rebuildAssetFilter();
 
-      // Separar trades ejecutados de observaciones
-      const executedTrades = trades.filter(isTrade);
-      const observations = trades.filter(t => !isTrade(t));
+      // Vista filtrada por activo (si hay filtro). El resto del dashboard usa viewTrades.
+      const viewTrades = assetFilter ? trades.filter(t => (t.par || '') === assetFilter) : trades;
+
+      document.getElementById('tradeCount').textContent = viewTrades.length;
+      btnExportPdf.disabled = viewTrades.length === 0;
+
+      // Separar trades ejecutados de observaciones (dentro de la vista)
+      const executedTrades = viewTrades.filter(isTrade);
+      const observations = viewTrades.filter(t => !isTrade(t));
 
       // === Métricas que solo aplican a trades ejecutados ===
       const wins = executedTrades.filter(t => t.r > 0).length;
@@ -3976,17 +4337,21 @@
       if (observations.length === 0) {
         obsSubEl.textContent = 'sin trades ejecutados';
       } else {
-        const totalRegistros = trades.length;
+        const totalRegistros = viewTrades.length;
         const pctObs = Math.round((observations.length / totalRegistros) * 100);
         obsSubEl.textContent = `${pctObs}% del total · disciplina de no operar`;
       }
 
+      // ===== ESTADÍSTICAS SOBRE R =====
+      renderStats(executedTrades);
+
       // ===== HISTORIAL =====
       const body = document.getElementById('tradesBody');
-      if (trades.length === 0) {
-        body.innerHTML = '<tr><td colspan="10" class="empty-state">sin registros · empezá con uno arriba</td></tr>';
+      if (viewTrades.length === 0) {
+        const msg = assetFilter ? `sin registros para ${escapeHtml(assetFilter)}` : 'sin registros · empezá con uno arriba';
+        body.innerHTML = `<tr><td colspan="10" class="empty-state">${msg}</td></tr>`;
       } else {
-        const sorted = [...trades].sort((a, b) =>
+        const sorted = [...viewTrades].sort((a, b) =>
           (b.fecha + 'T' + (b.hora || '00:00')).localeCompare(a.fecha + 'T' + (a.hora || '00:00'))
         );
         body.innerHTML = sorted.map(t => {
@@ -4064,15 +4429,15 @@
         });
       }
 
-      renderReview();
+      renderReview(viewTrades);
       const totalLabel = observations.length > 0
         ? `${executedTrades.length} trades · ${observations.length} obs.`
-        : `${trades.length} trades`;
+        : `${viewTrades.length} trades`;
       document.getElementById('storageInfo').textContent = totalLabel;
     }
 
-    function renderReview() {
-      const sorted = [...trades].sort((a, b) =>
+    function renderReview(viewTrades) {
+      const sorted = [...viewTrades].sort((a, b) =>
         (b.fecha + 'T' + (b.hora || '00:00')).localeCompare(a.fecha + 'T' + (a.hora || '00:00'))
       );
 
@@ -4117,6 +4482,82 @@
       }
     }
 
+    // Reconstruye las opciones del selector de activos a partir de los pares existentes.
+    // Mantiene la selección actual si el par sigue existiendo.
+    function rebuildAssetFilter() {
+      const sel = document.getElementById('assetFilter');
+      if (!sel) return;
+      const pares = [...new Set(trades.map(t => (t.par || '').trim()).filter(Boolean))].sort();
+      // Si el filtro activo ya no existe (p.ej. se borró el último de ese par), volver a "todos"
+      if (assetFilter && !pares.includes(assetFilter)) assetFilter = '';
+      const opts = ['<option value="">Todos los activos</option>']
+        .concat(pares.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`));
+      sel.innerHTML = opts.join('');
+      sel.value = assetFilter;
+    }
+
+    // ===== Estadísticas sobre R (solo trades ejecutados de la vista) =====
+    function renderStats(execs) {
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      const wins = execs.filter(t => t.r > 0);
+      const losses = execs.filter(t => t.r < 0);
+
+      set('stWinLoss', execs.length === 0 ? '—' : `${wins.length} / ${losses.length}`);
+      set('stWinLossSub', execs.length === 0 ? '—' : `${execs.length} trades ejecutados`);
+
+      const avgWin = wins.length ? wins.reduce((s, t) => s + t.r, 0) / wins.length : null;
+      const avgLoss = losses.length ? losses.reduce((s, t) => s + t.r, 0) / losses.length : null;
+      set('stAvgWin', avgWin === null ? '—' : `+${avgWin.toFixed(2)}R`);
+      set('stAvgLoss', avgLoss === null ? '—' : `${avgLoss.toFixed(2)}R`);
+
+      const best = wins.length ? Math.max(...wins.map(t => t.r)) : null;
+      const worst = losses.length ? Math.min(...losses.map(t => t.r)) : null;
+      set('stBestWin', best === null ? '—' : `+${best.toFixed(1)}R`);
+      set('stWorstLoss', worst === null ? '—' : `${worst.toFixed(1)}R`);
+
+      // Rachas: en orden cronológico (más viejo → más nuevo). BE no corta la racha.
+      const chrono = [...execs].sort((a, b) =>
+        (a.fecha + 'T' + (a.hora || '00:00')).localeCompare(b.fecha + 'T' + (b.hora || '00:00'))
+      );
+      const winStreaks = [], lossStreaks = [];
+      let curW = 0, curL = 0;
+      chrono.forEach(t => {
+        if (t.r > 0) { curW++; if (curL > 0) { lossStreaks.push(curL); curL = 0; } }
+        else if (t.r < 0) { curL++; if (curW > 0) { winStreaks.push(curW); curW = 0; } }
+        // r === 0 (BE): no corta ni suma
+      });
+      if (curW > 0) winStreaks.push(curW);
+      if (curL > 0) lossStreaks.push(curL);
+      const maxOr = arr => arr.length ? Math.max(...arr) : 0;
+      const avgOr = arr => arr.length ? (arr.reduce((s, v) => s + v, 0) / arr.length) : 0;
+
+      set('stWinStreak', winStreaks.length ? String(maxOr(winStreaks)) : '—');
+      set('stWinStreakSub', winStreaks.length ? `máx · prom ${avgOr(winStreaks).toFixed(1)}` : 'máx · promedio');
+      set('stLossStreak', lossStreaks.length ? String(maxOr(lossStreaks)) : '—');
+      set('stLossStreakSub', lossStreaks.length ? `máx · prom ${avgOr(lossStreaks).toFixed(1)}` : 'máx · promedio');
+
+      // Sharpe sobre R: media / desviación estándar de los R. Mide consistencia.
+      const sharpeEl = document.getElementById('stSharpe');
+      const sharpeSubEl = document.getElementById('stSharpeSub');
+      if (execs.length < 2) {
+        if (sharpeEl) sharpeEl.textContent = '—';
+        if (sharpeSubEl) sharpeSubEl.textContent = 'faltan trades';
+      } else {
+        const rs = execs.map(t => t.r || 0);
+        const mean = rs.reduce((s, v) => s + v, 0) / rs.length;
+        const variance = rs.reduce((s, v) => s + (v - mean) ** 2, 0) / (rs.length - 1);
+        const sd = Math.sqrt(variance);
+        if (sd === 0) {
+          if (sharpeEl) sharpeEl.textContent = '—';
+          if (sharpeSubEl) sharpeSubEl.textContent = 'sin variación';
+        } else {
+          const sharpe = mean / sd;
+          if (sharpeEl) { sharpeEl.textContent = sharpe.toFixed(2); sharpeEl.className = 'stat-value ' + (sharpe > 0 ? 'pos' : 'neg'); }
+          if (sharpeSubEl) sharpeSubEl.textContent = 'media R / desvío';
+        }
+      }
+    }
+
     function setDefaultDateTime() {
       const now = new Date();
       document.getElementById('fecha').value = now.toISOString().split('T')[0];
@@ -4133,6 +4574,12 @@
     resetLinkList('linkListEntrada');
     resetLinkList('editLinkListPre');
     resetLinkList('editLinkListEntrada');
+
+    // Filtro por activo: al cambiar, re-render de métricas e historial
+    document.getElementById('assetFilter').addEventListener('change', (e) => {
+      assetFilter = e.target.value;
+      render();
+    });
   </script>
 
 </body>
