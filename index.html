@@ -1000,6 +1000,17 @@
       margin-top: 2px;
     }
 
+    .plan-cell .plan-tipo-tag {
+      display: inline-block;
+      margin-top: 5px;
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+    }
+
     .plan-cell .legacy {
       font-size: 11px;
       color: var(--text-dim);
@@ -1951,7 +1962,7 @@
     <header class="header">
       <div>
         <h1>Bitácora</h1>
-        <div class="subtitle">trading behavior log · <em>v12</em></div>
+        <div class="subtitle">trading behavior log · <em>v13</em></div>
       </div>
       <div class="header-right">
         <div class="user-info">
@@ -2246,7 +2257,7 @@
     </div>
 
     <footer class="footer">
-      <span>Bitácora v12 · Firestore</span>
+      <span>Bitácora v13 · Firestore</span>
       <span id="storageInfo">0 trades</span>
     </footer>
   </div>
@@ -3332,6 +3343,12 @@
       return `${CONF_TYPE_LABEL[type]} ${si}/${ty.items.length}`;
     }
 
+    // Etiqueta corta del tipo de plan de un registro (default IMC por compatibilidad)
+    function tradePlanTipoLabel(t) {
+      const tipo = (t.planTipo === 'continuacion') ? 'continuacion' : 'imc';
+      return tipo === 'continuacion' ? 'Continuación' : 'Plan I.M.C';
+    }
+
     // Genera la celda de plan para la tabla del historial
     function planCellHtml(t) {
       const v = planVerdict(t);
@@ -3350,6 +3367,7 @@
       return `<div class="plan-cell">
         <span class="adh ${cls}">${txt}</span>
         <div class="adh-sub">${escapeHtml(tradeConfDetalle(t))}</div>
+        <div class="plan-tipo-tag">${escapeHtml(tradePlanTipoLabel(t))}</div>
       </div>`;
     }
 
@@ -3594,16 +3612,19 @@
       const executed = pdfTrades.filter(isTrade);
       const observations = pdfTrades.filter(t => !isTrade(t));
 
-      // Cálculos sobre trades ejecutados
+      // Cálculos sobre trades ejecutados (las tablas NO cuentan en el winrate)
       const wins = executed.filter(t => t.r > 0).length;
       const losses = executed.filter(t => t.r < 0).length;
       const be = executed.filter(t => t.r === 0).length;
+      const decididos = wins + losses;
       const neto = executed.reduce((s, t) => s + (t.r || 0), 0);
 
       const noDuda = executed.filter(t => t.duda === 'no');
       const siDuda = executed.filter(t => t.duda === 'si');
-      const wrNoDuda = noDuda.length > 0 ? Math.round((noDuda.filter(t => t.r > 0).length / noDuda.length) * 100) : null;
-      const wrSiDuda = siDuda.length > 0 ? Math.round((siDuda.filter(t => t.r > 0).length / siDuda.length) * 100) : null;
+      const noDudaDec = noDuda.filter(t => t.r !== 0).length;
+      const siDudaDec = siDuda.filter(t => t.r !== 0).length;
+      const wrNoDuda = noDudaDec > 0 ? Math.round((noDuda.filter(t => t.r > 0).length / noDudaDec) * 100) : null;
+      const wrSiDuda = siDudaDec > 0 ? Math.round((siDuda.filter(t => t.r > 0).length / siDudaDec) * 100) : null;
 
       // Veredicto del plan (basado en Confirmación).
       // Cruzamos trades VÁLIDOS vs NO VÁLIDOS con su winrate, para ver si respetar
@@ -3711,9 +3732,9 @@
       setText(8, COLOR_DIM);
       pdf.text('WINRATE TOTAL', marginX, y);
       setText(24, COLOR_TEXT, 'bold');
-      pdf.text(`${executed.length === 0 ? '—' : Math.round((wins / executed.length) * 100) + '%'}`, marginX, y + 10);
+      pdf.text(`${decididos === 0 ? '—' : Math.round((wins / decididos) * 100) + '%'}`, marginX, y + 10);
       setText(8, COLOR_DIM);
-      pdf.text(`${wins}W · ${losses}L · ${be}BE`, marginX, y + 16);
+      pdf.text(`${wins}W · ${losses}L · ${be} tablas`, marginX, y + 16);
       pdf.text(`${neto >= 0 ? '+' : ''}${neto.toFixed(1)}R neto`, marginX, y + 21);
 
       // Col 2: Duda vs Sin duda
@@ -4234,27 +4255,32 @@
       // === Métricas que solo aplican a trades ejecutados ===
       const wins = executedTrades.filter(t => t.r > 0).length;
       const losses = executedTrades.filter(t => t.r < 0).length;
-      const be = executedTrades.filter(t => t.r === 0).length;
+      const be = executedTrades.filter(t => t.r === 0).length; // tablas (break-even)
       const neto = executedTrades.reduce((s, t) => s + (t.r || 0), 0);
+      // Las tablas NO cuentan en el winrate: winrate = ganados / (ganados + perdidos)
+      const decididos = wins + losses;
 
-      document.getElementById('wrTotal').textContent = executedTrades.length === 0 ? '—' : fmtPct(wins, executedTrades.length);
+      document.getElementById('wrTotal').textContent = decididos === 0 ? '—' : fmtPct(wins, decididos);
       document.getElementById('wrTotalSub').textContent = executedTrades.length === 0
         ? 'sin trades ejecutados'
-        : `${wins}W · ${losses}L · ${be}BE · ${neto.toFixed(1)}R neto`;
+        : `${wins}W · ${losses}L · ${be} tablas · ${neto.toFixed(1)}R neto`;
 
+      // Winrate por duda: también excluye tablas del divisor
       const noDuda = executedTrades.filter(t => t.duda === 'no');
       const siDuda = executedTrades.filter(t => t.duda === 'si');
-      document.getElementById('wrNoDuda').textContent = fmtPct(noDuda.filter(t => t.r > 0).length, noDuda.length);
-      document.getElementById('wrDuda').textContent = fmtPct(siDuda.filter(t => t.r > 0).length, siDuda.length);
+      const noDudaDecididos = noDuda.filter(t => t.r !== 0).length;
+      const siDudaDecididos = siDuda.filter(t => t.r !== 0).length;
+      document.getElementById('wrNoDuda').textContent = fmtPct(noDuda.filter(t => t.r > 0).length, noDudaDecididos);
+      document.getElementById('wrDuda').textContent = fmtPct(siDuda.filter(t => t.r > 0).length, siDudaDecididos);
       document.getElementById('wrNoDudaSub').textContent = `${noDuda.length} trades`;
       document.getElementById('wrDudaSub').textContent = `${siDuda.length} trades`;
 
       const boxNoDuda = document.getElementById('wrNoDudaBox');
       const boxDuda = document.getElementById('wrDudaBox');
       boxNoDuda.className = ''; boxDuda.className = '';
-      if (noDuda.length > 0 && siDuda.length > 0) {
-        const nr = noDuda.filter(t => t.r > 0).length / noDuda.length;
-        const sr = siDuda.filter(t => t.r > 0).length / siDuda.length;
+      if (noDudaDecididos > 0 && siDudaDecididos > 0) {
+        const nr = noDuda.filter(t => t.r > 0).length / noDudaDecididos;
+        const sr = siDuda.filter(t => t.r > 0).length / siDudaDecididos;
         if (nr > sr) { boxNoDuda.className = 'has-data-good'; boxDuda.className = 'has-data-bad'; }
         else if (sr > nr) { boxNoDuda.className = 'has-data-bad'; boxDuda.className = 'has-data-good'; }
       }
