@@ -1962,7 +1962,7 @@
     <header class="header">
       <div>
         <h1>Bitácora</h1>
-        <div class="subtitle">trading behavior log · <em>v13</em></div>
+        <div class="subtitle">trading behavior log · <em>v14</em></div>
       </div>
       <div class="header-right">
         <div class="user-info">
@@ -2257,7 +2257,7 @@
     </div>
 
     <footer class="footer">
-      <span>Bitácora v13 · Firestore</span>
+      <span>Bitácora v14 · Firestore</span>
       <span id="storageInfo">0 trades</span>
     </footer>
   </div>
@@ -3034,6 +3034,15 @@
       return Math.round((wins / total) * 100) + '%';
     }
 
+    // ===== Clasificación de resultado (R) =====
+    // Un trade con |R| <= 0.1 se cuenta como TABLAS (ni ganancia ni pérdida):
+    // no entra en el winrate ni en las estadísticas de win/loss. El valor real de R
+    // no cambia (se sigue mostrando +0.1R, etc.), solo cambia cómo se clasifica.
+    const BE_THRESHOLD = 0.1;
+    function esWin(r) { return (r || 0) > BE_THRESHOLD; }
+    function esLoss(r) { return (r || 0) < -BE_THRESHOLD; }
+    function esTablas(r) { return Math.abs(r || 0) <= BE_THRESHOLD; }
+
     function escapeHtml(str) {
       if (!str) return '';
       return String(str)
@@ -3613,18 +3622,18 @@
       const observations = pdfTrades.filter(t => !isTrade(t));
 
       // Cálculos sobre trades ejecutados (las tablas NO cuentan en el winrate)
-      const wins = executed.filter(t => t.r > 0).length;
-      const losses = executed.filter(t => t.r < 0).length;
-      const be = executed.filter(t => t.r === 0).length;
+      const wins = executed.filter(t => esWin(t.r)).length;
+      const losses = executed.filter(t => esLoss(t.r)).length;
+      const be = executed.filter(t => esTablas(t.r)).length;
       const decididos = wins + losses;
       const neto = executed.reduce((s, t) => s + (t.r || 0), 0);
 
       const noDuda = executed.filter(t => t.duda === 'no');
       const siDuda = executed.filter(t => t.duda === 'si');
-      const noDudaDec = noDuda.filter(t => t.r !== 0).length;
-      const siDudaDec = siDuda.filter(t => t.r !== 0).length;
-      const wrNoDuda = noDudaDec > 0 ? Math.round((noDuda.filter(t => t.r > 0).length / noDudaDec) * 100) : null;
-      const wrSiDuda = siDudaDec > 0 ? Math.round((siDuda.filter(t => t.r > 0).length / siDudaDec) * 100) : null;
+      const noDudaDec = noDuda.filter(t => !esTablas(t.r)).length;
+      const siDudaDec = siDuda.filter(t => !esTablas(t.r)).length;
+      const wrNoDuda = noDudaDec > 0 ? Math.round((noDuda.filter(t => esWin(t.r)).length / noDudaDec) * 100) : null;
+      const wrSiDuda = siDudaDec > 0 ? Math.round((siDuda.filter(t => esWin(t.r)).length / siDudaDec) * 100) : null;
 
       // Veredicto del plan (basado en Confirmación).
       // Cruzamos trades VÁLIDOS vs NO VÁLIDOS con su winrate, para ver si respetar
@@ -3635,13 +3644,15 @@
       });
       const validos = conVeredicto.filter(t => planVerdict(t) === 'valido');
       const noValidos = conVeredicto.filter(t => planVerdict(t) === 'no_valido');
-      const wrValidos = validos.length > 0 ? Math.round((validos.filter(t => t.r > 0).length / validos.length) * 100) : null;
-      const wrNoValidos = noValidos.length > 0 ? Math.round((noValidos.filter(t => t.r > 0).length / noValidos.length) * 100) : null;
+      const validosDec = validos.filter(t => !esTablas(t.r)).length;
+      const noValidosDec = noValidos.filter(t => !esTablas(t.r)).length;
+      const wrValidos = validosDec > 0 ? Math.round((validos.filter(t => esWin(t.r)).length / validosDec) * 100) : null;
+      const wrNoValidos = noValidosDec > 0 ? Math.round((noValidos.filter(t => esWin(t.r)).length / noValidosDec) * 100) : null;
 
       // Expectancy y profit factor
       const expectancy = executed.length > 0 ? (neto / executed.length) : null;
-      const grossWin = executed.filter(t => t.r > 0).reduce((s, t) => s + t.r, 0);
-      const grossLoss = Math.abs(executed.filter(t => t.r < 0).reduce((s, t) => s + t.r, 0));
+      const grossWin = executed.filter(t => esWin(t.r)).reduce((s, t) => s + t.r, 0);
+      const grossLoss = Math.abs(executed.filter(t => esLoss(t.r)).reduce((s, t) => s + t.r, 0));
       let profitFactor = null;
       if (executed.length > 0 && grossLoss > 0) profitFactor = grossWin / grossLoss;
 
@@ -3844,8 +3855,8 @@
 
       // ============= ESTADÍSTICAS SOBRE R =============
       {
-        const winsArr = executed.filter(t => t.r > 0);
-        const lossArr = executed.filter(t => t.r < 0);
+        const winsArr = executed.filter(t => esWin(t.r));
+        const lossArr = executed.filter(t => esLoss(t.r));
         const avgW = winsArr.length ? winsArr.reduce((s, t) => s + t.r, 0) / winsArr.length : null;
         const avgL = lossArr.length ? lossArr.reduce((s, t) => s + t.r, 0) / lossArr.length : null;
         const bestW = winsArr.length ? Math.max(...winsArr.map(t => t.r)) : null;
@@ -3855,8 +3866,8 @@
           (a.fecha + 'T' + (a.hora || '00:00')).localeCompare(b.fecha + 'T' + (b.hora || '00:00')));
         const ws = [], ls = []; let cw = 0, cl = 0;
         chrono.forEach(t => {
-          if (t.r > 0) { cw++; if (cl > 0) { ls.push(cl); cl = 0; } }
-          else if (t.r < 0) { cl++; if (cw > 0) { ws.push(cw); cw = 0; } }
+          if (esWin(t.r)) { cw++; if (cl > 0) { ls.push(cl); cl = 0; } }
+          else if (esLoss(t.r)) { cl++; if (cw > 0) { ws.push(cw); cw = 0; } }
         });
         if (cw > 0) ws.push(cw); if (cl > 0) ls.push(cl);
         const maxOr = a => a.length ? Math.max(...a) : 0;
@@ -3934,7 +3945,7 @@
           setText(8, COLOR_DIM);
           pdf.text(`Setup: ${t.setup || '—'}`, marginX + 95, y);
 
-          const rColor = t.r > 0 ? COLOR_WIN : t.r < 0 ? COLOR_LOSS : COLOR_DIM;
+          const rColor = esWin(t.r) ? COLOR_WIN : esLoss(t.r) ? COLOR_LOSS : COLOR_DIM;
           setText(11, rColor, 'bold');
           pdf.text(`${rSign}${t.r}R`, pageWidth - marginX, y, { align: 'right' });
         }
@@ -4253,9 +4264,9 @@
       const observations = viewTrades.filter(t => !isTrade(t));
 
       // === Métricas que solo aplican a trades ejecutados ===
-      const wins = executedTrades.filter(t => t.r > 0).length;
-      const losses = executedTrades.filter(t => t.r < 0).length;
-      const be = executedTrades.filter(t => t.r === 0).length; // tablas (break-even)
+      const wins = executedTrades.filter(t => esWin(t.r)).length;
+      const losses = executedTrades.filter(t => esLoss(t.r)).length;
+      const be = executedTrades.filter(t => esTablas(t.r)).length; // tablas (|R| <= 0.1)
       const neto = executedTrades.reduce((s, t) => s + (t.r || 0), 0);
       // Las tablas NO cuentan en el winrate: winrate = ganados / (ganados + perdidos)
       const decididos = wins + losses;
@@ -4268,10 +4279,10 @@
       // Winrate por duda: también excluye tablas del divisor
       const noDuda = executedTrades.filter(t => t.duda === 'no');
       const siDuda = executedTrades.filter(t => t.duda === 'si');
-      const noDudaDecididos = noDuda.filter(t => t.r !== 0).length;
-      const siDudaDecididos = siDuda.filter(t => t.r !== 0).length;
-      document.getElementById('wrNoDuda').textContent = fmtPct(noDuda.filter(t => t.r > 0).length, noDudaDecididos);
-      document.getElementById('wrDuda').textContent = fmtPct(siDuda.filter(t => t.r > 0).length, siDudaDecididos);
+      const noDudaDecididos = noDuda.filter(t => !esTablas(t.r)).length;
+      const siDudaDecididos = siDuda.filter(t => !esTablas(t.r)).length;
+      document.getElementById('wrNoDuda').textContent = fmtPct(noDuda.filter(t => esWin(t.r)).length, noDudaDecididos);
+      document.getElementById('wrDuda').textContent = fmtPct(siDuda.filter(t => esWin(t.r)).length, siDudaDecididos);
       document.getElementById('wrNoDudaSub').textContent = `${noDuda.length} trades`;
       document.getElementById('wrDudaSub').textContent = `${siDuda.length} trades`;
 
@@ -4279,8 +4290,8 @@
       const boxDuda = document.getElementById('wrDudaBox');
       boxNoDuda.className = ''; boxDuda.className = '';
       if (noDudaDecididos > 0 && siDudaDecididos > 0) {
-        const nr = noDuda.filter(t => t.r > 0).length / noDudaDecididos;
-        const sr = siDuda.filter(t => t.r > 0).length / siDudaDecididos;
+        const nr = noDuda.filter(t => esWin(t.r)).length / noDudaDecididos;
+        const sr = siDuda.filter(t => esWin(t.r)).length / siDudaDecididos;
         if (nr > sr) { boxNoDuda.className = 'has-data-good'; boxDuda.className = 'has-data-bad'; }
         else if (sr > nr) { boxNoDuda.className = 'has-data-bad'; boxDuda.className = 'has-data-good'; }
       }
@@ -4339,8 +4350,8 @@
       // > 1.0 → sistema rentable en términos brutos. Cuanto más alto, mejor.
       const profitFactorEl = document.getElementById('profitFactor');
       const profitFactorSubEl = document.getElementById('profitFactorSub');
-      const grossWin = executedTrades.filter(t => t.r > 0).reduce((s, t) => s + t.r, 0);
-      const grossLoss = Math.abs(executedTrades.filter(t => t.r < 0).reduce((s, t) => s + t.r, 0));
+      const grossWin = executedTrades.filter(t => esWin(t.r)).reduce((s, t) => s + t.r, 0);
+      const grossLoss = Math.abs(executedTrades.filter(t => esLoss(t.r)).reduce((s, t) => s + t.r, 0));
       if (executedTrades.length === 0) {
         profitFactorEl.textContent = '—';
         profitFactorEl.style.color = '';
@@ -4423,8 +4434,8 @@
         `;
           }
 
-          // Fila de trade ejecutado (igual que antes)
-          const rClass = t.r > 0 ? 'positive' : t.r < 0 ? 'negative' : 'neutral';
+          // Fila de trade ejecutado. Tablas (|R| <= 0.1) se pintan neutro.
+          const rClass = esWin(t.r) ? 'positive' : esLoss(t.r) ? 'negative' : 'neutral';
           const rSign = t.r > 0 ? '+' : '';
           return `
         <tr>
@@ -4525,8 +4536,8 @@
     // ===== Estadísticas sobre R (solo trades ejecutados de la vista) =====
     function renderStats(execs) {
       const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-      const wins = execs.filter(t => t.r > 0);
-      const losses = execs.filter(t => t.r < 0);
+      const wins = execs.filter(t => esWin(t.r));
+      const losses = execs.filter(t => esLoss(t.r));
 
       set('stWinLoss', execs.length === 0 ? '—' : `${wins.length} / ${losses.length}`);
       set('stWinLossSub', execs.length === 0 ? '—' : `${execs.length} trades ejecutados`);
@@ -4548,9 +4559,9 @@
       const winStreaks = [], lossStreaks = [];
       let curW = 0, curL = 0;
       chrono.forEach(t => {
-        if (t.r > 0) { curW++; if (curL > 0) { lossStreaks.push(curL); curL = 0; } }
-        else if (t.r < 0) { curL++; if (curW > 0) { winStreaks.push(curW); curW = 0; } }
-        // r === 0 (BE): no corta ni suma
+        if (esWin(t.r)) { curW++; if (curL > 0) { lossStreaks.push(curL); curL = 0; } }
+        else if (esLoss(t.r)) { curL++; if (curW > 0) { winStreaks.push(curW); curW = 0; } }
+        // tablas (|R| <= 0.1): no corta ni suma
       });
       if (curW > 0) winStreaks.push(curW);
       if (curL > 0) lossStreaks.push(curL);
