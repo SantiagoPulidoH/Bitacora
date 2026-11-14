@@ -342,6 +342,206 @@
       letter-spacing: 0;
     }
 
+    /* ===== Recordatorio / repaso semanal ===== */
+    .weekly {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      padding: 18px 20px;
+      margin-bottom: 40px;
+    }
+
+    .weekly-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .weekly-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .weekly-date {
+      color: var(--text-faded);
+      margin-left: 8px;
+    }
+
+    .weekly-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .weekly-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 7px 12px;
+      transition: all 0.15s;
+    }
+
+    .weekly-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .weekly-btn.solid { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .weekly-btn.solid:hover { opacity: 0.9; color: var(--bg); }
+    .weekly-btn.ghost { color: var(--text-faded); }
+
+    .weekly-latest {
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--text);
+      margin-top: 14px;
+      white-space: pre-wrap;
+    }
+
+    .weekly-latest.empty {
+      color: var(--text-faded);
+      font-style: italic;
+      font-size: 13px;
+    }
+
+    .weekly-form { display: none; margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px; }
+    .weekly-form.open { display: block; }
+
+    .weekly-form-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .weekly-form-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+
+    .weekly-form-row label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .weekly-form-row input[type="date"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      outline: none;
+      color-scheme: dark;
+    }
+
+    .weekly-form textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 12px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      outline: none;
+      resize: vertical;
+      box-sizing: border-box;
+      color-scheme: dark;
+    }
+
+    .weekly-form textarea:focus,
+    .weekly-form-row input:focus { border-color: var(--accent); }
+
+    .weekly-form-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+      justify-content: flex-end;
+    }
+
+    .weekly-form-actions .msg { margin-right: auto; font-size: 11px; }
+
+    .weekly-history { display: none; margin-top: 16px; border-top: 1px solid var(--border); padding-top: 14px; }
+    .weekly-history.open { display: block; }
+
+    .weekly-history-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .weekly-item {
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+
+    .weekly-item-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .weekly-item-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+    }
+
+    .weekly-item-actions { display: flex; gap: 6px; }
+
+    .weekly-item-text {
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text-dim);
+      white-space: pre-wrap;
+    }
+
+    .weekly-empty-hist { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-faded); }
+
+    /* Recordatorio compacto encima de "Nuevo registro" */
+    .weekly-mini {
+      display: none;
+      background: var(--bg-elev, var(--bg-card));
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      padding: 12px 16px;
+      margin-bottom: 20px;
+    }
+
+    .weekly-mini.show { display: block; }
+
+    .weekly-mini .wm-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .weekly-mini .wm-text {
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text-dim);
+      white-space: pre-wrap;
+    }
+
     /* Header de métricas con filtro de activo */
     .metrics-header {
       display: flex;
@@ -1962,7 +2162,7 @@
     <header class="header">
       <div>
         <h1>Bitácora</h1>
-        <div class="subtitle">trading behavior log · <em>v14</em></div>
+        <div class="subtitle">trading behavior log · <em>v15</em></div>
       </div>
       <div class="header-right">
         <div class="user-info">
@@ -1972,6 +2172,39 @@
         <button class="logout-btn" id="btnLogout">Cerrar sesión</button>
       </div>
     </header>
+
+    <!-- Recordatorio / repaso semanal -->
+    <div class="weekly" id="weeklyBanner">
+      <div class="weekly-head">
+        <div class="weekly-title">Recordatorio de la semana <span id="weeklyDate" class="weekly-date"></span></div>
+        <div class="weekly-actions">
+          <button type="button" class="weekly-btn" id="btnNuevaReflexion">+ Nueva</button>
+          <button type="button" class="weekly-btn ghost" id="btnVerAnteriores">Ver anteriores</button>
+        </div>
+      </div>
+      <div class="weekly-latest" id="weeklyLatest"></div>
+
+      <!-- Form para crear / editar una reflexión semanal -->
+      <div class="weekly-form" id="weeklyForm">
+        <div class="weekly-form-title" id="weeklyFormTitle">Nueva reflexión de la semana</div>
+        <div class="weekly-form-row">
+          <label for="recFecha">Semana del</label>
+          <input type="date" id="recFecha">
+        </div>
+        <textarea id="recTexto" rows="4" placeholder="¿Qué errores tuve esta semana? ¿Qué tengo que tener en cuenta antes de operar la próxima?"></textarea>
+        <div class="weekly-form-actions">
+          <span class="msg" id="recMsg"></span>
+          <button type="button" class="weekly-btn ghost" id="btnCancelarRec">Cancelar</button>
+          <button type="button" class="weekly-btn solid" id="btnGuardarRec">Guardar</button>
+        </div>
+      </div>
+
+      <!-- Historial de semanas anteriores -->
+      <div class="weekly-history" id="weeklyHistory">
+        <div class="weekly-history-title">Semanas anteriores</div>
+        <div id="weeklyHistoryList"></div>
+      </div>
+    </div>
 
     <div class="metrics-header">
       <div class="section-label" style="margin:0;">Métricas</div>
@@ -2073,6 +2306,7 @@
       </div>
     </div>
 
+    <div class="weekly-mini" id="weeklyMini"></div>
     <div class="section-label">Nuevo registro</div>
     <form id="tradeForm">
 
@@ -2257,7 +2491,7 @@
     </div>
 
     <footer class="footer">
-      <span>Bitácora v14 · Firestore</span>
+      <span>Bitácora v15 · Firestore</span>
       <span id="storageInfo">0 trades</span>
     </footer>
   </div>
@@ -2535,6 +2769,8 @@
     let unsubscribeTrades = null;
     let editingTradeId = null;
     let assetFilter = ''; // '' = todos los activos; si no, filtra por par
+    let recordatorios = []; // repaso semanal (docs tipoDia:'recordatorio'), más nuevo primero
+    let editingRecordatorioId = null; // id del recordatorio en edición, o null al crear
 
     const initialLoader = document.getElementById('initialLoader');
     const loginScreen = document.getElementById('loginScreen');
@@ -2638,10 +2874,17 @@
       setSyncState('syncing');
       const q = query(collection(db, 'trades'), where('userId', '==', currentUser.uid));
       unsubscribeTrades = onSnapshot(q, (snapshot) => {
-        trades = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        const all = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Separar los recordatorios semanales de los trades/observaciones.
+        // Así métricas, historial, filtro y PDF nunca los ven (usan `trades`).
+        recordatorios = all
+          .filter(d => d.tipoDia === 'recordatorio')
+          .sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+        trades = all.filter(d => d.tipoDia !== 'recordatorio');
         setSyncState('ok');
         saveHelper.textContent = 'sincronizado con la nube';
         render();
+        renderRecordatorios();
       }, (err) => {
         console.error('Firestore error:', err);
         setSyncState('offline');
@@ -4602,6 +4845,140 @@
       const mm = String(now.getMinutes()).padStart(2, '0');
       document.getElementById('hora').value = `${hh}:${mm}`;
     }
+
+    // ===== Recordatorio / repaso semanal =====
+    function fmtRecFecha(f) {
+      if (!f) return '';
+      const p = String(f).split('-');
+      return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : f;
+    }
+
+    function renderRecordatorios() {
+      const latest = recordatorios[0] || null;
+      const dateEl = document.getElementById('weeklyDate');
+      const latestEl = document.getElementById('weeklyLatest');
+      const mini = document.getElementById('weeklyMini');
+
+      if (latest) {
+        dateEl.textContent = '· ' + fmtRecFecha(latest.fecha);
+        latestEl.textContent = latest.texto || '';
+        latestEl.className = 'weekly-latest';
+        mini.className = 'weekly-mini show';
+        mini.innerHTML = `<div class="wm-label">Recordatorio · semana del ${escapeHtml(fmtRecFecha(latest.fecha))}</div><div class="wm-text">${escapeHtml(latest.texto || '')}</div>`;
+      } else {
+        dateEl.textContent = '';
+        latestEl.textContent = 'Todavía no escribiste tu repaso semanal. Tocá "+ Nueva" para empezar.';
+        latestEl.className = 'weekly-latest empty';
+        mini.className = 'weekly-mini';
+        mini.innerHTML = '';
+      }
+
+      // Historial: todas las entradas, la más nueva marcada como "actual"
+      const list = document.getElementById('weeklyHistoryList');
+      if (recordatorios.length === 0) {
+        list.innerHTML = '<div class="weekly-empty-hist">No hay reflexiones guardadas todavía.</div>';
+      } else {
+        list.innerHTML = recordatorios.map((r, i) => `
+          <div class="weekly-item">
+            <div class="weekly-item-head">
+              <span class="weekly-item-date">${escapeHtml(fmtRecFecha(r.fecha))}${i === 0 ? ' · actual' : ''}</span>
+              <span class="weekly-item-actions">
+                <button type="button" class="icon-btn edit" data-rec-edit="${r.id}" title="Editar">✎</button>
+                <button type="button" class="icon-btn delete" data-rec-del="${r.id}" title="Eliminar">✕</button>
+              </span>
+            </div>
+            <div class="weekly-item-text">${escapeHtml(r.texto || '')}</div>
+          </div>
+        `).join('');
+        list.querySelectorAll('[data-rec-edit]').forEach(b => b.addEventListener('click', () => openRecordatorioForm(b.dataset.recEdit)));
+        list.querySelectorAll('[data-rec-del]').forEach(b => b.addEventListener('click', () => deleteRecordatorio(b.dataset.recDel)));
+      }
+    }
+
+    function openRecordatorioForm(id) {
+      const form = document.getElementById('weeklyForm');
+      const titleEl = document.getElementById('weeklyFormTitle');
+      const fechaEl = document.getElementById('recFecha');
+      const textoEl = document.getElementById('recTexto');
+      document.getElementById('recMsg').textContent = '';
+
+      if (id) {
+        const r = recordatorios.find(x => x.id === id);
+        if (!r) return;
+        editingRecordatorioId = id;
+        titleEl.textContent = 'Editar reflexión';
+        fechaEl.value = r.fecha || new Date().toISOString().split('T')[0];
+        textoEl.value = r.texto || '';
+      } else {
+        editingRecordatorioId = null;
+        titleEl.textContent = 'Nueva reflexión de la semana';
+        fechaEl.value = new Date().toISOString().split('T')[0];
+        textoEl.value = '';
+      }
+      form.classList.add('open');
+      textoEl.focus();
+    }
+
+    function closeRecordatorioForm() {
+      document.getElementById('weeklyForm').classList.remove('open');
+      editingRecordatorioId = null;
+      document.getElementById('recTexto').value = '';
+      document.getElementById('recMsg').textContent = '';
+    }
+
+    async function saveRecordatorio() {
+      if (!currentUser) return;
+      const fecha = document.getElementById('recFecha').value || new Date().toISOString().split('T')[0];
+      const texto = document.getElementById('recTexto').value.trim();
+      const msg = document.getElementById('recMsg');
+      if (!texto) {
+        msg.textContent = 'Escribí algo antes de guardar.';
+        msg.className = 'msg error';
+        return;
+      }
+      const btn = document.getElementById('btnGuardarRec');
+      btn.disabled = true;
+      msg.textContent = 'guardando…';
+      msg.className = 'msg';
+      try {
+        if (editingRecordatorioId) {
+          await updateDoc(doc(db, 'trades', editingRecordatorioId), { fecha, texto, updatedAt: serverTimestamp() });
+        } else {
+          await addDoc(collection(db, 'trades'), {
+            userId: currentUser.uid,
+            tipoDia: 'recordatorio',
+            fecha,
+            texto,
+            createdAt: serverTimestamp()
+          });
+        }
+        closeRecordatorioForm();
+      } catch (err) {
+        console.error('Recordatorio save error:', err);
+        msg.textContent = 'error: ' + err.message;
+        msg.className = 'msg error';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function deleteRecordatorio(id) {
+      if (!currentUser || !id) return;
+      if (!confirm('¿Eliminar esta reflexión semanal?')) return;
+      try {
+        await deleteDoc(doc(db, 'trades', id));
+      } catch (err) {
+        console.error('Recordatorio delete error:', err);
+        alert('No se pudo eliminar: ' + err.message);
+      }
+    }
+
+    document.getElementById('btnNuevaReflexion').addEventListener('click', () => openRecordatorioForm(null));
+    document.getElementById('btnCancelarRec').addEventListener('click', closeRecordatorioForm);
+    document.getElementById('btnGuardarRec').addEventListener('click', saveRecordatorio);
+    document.getElementById('btnVerAnteriores').addEventListener('click', () => {
+      document.getElementById('weeklyHistory').classList.toggle('open');
+    });
 
     setDefaultDateTime();
     applyDayTypeToMainForm();
